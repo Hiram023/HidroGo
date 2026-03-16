@@ -15,8 +15,8 @@ export type ClientInfo = {
   valves?: number;
 };
 
-export type DeviceType = "POZO" | "VALVULA";
-export type DeviceState = "ON" | "OFF";
+export type DeviceType = "POZO" | "VALVULA" | "MEDIDOR";
+export type DeviceState = "ON" | "OFF" | "LECTURA";
 
 export type Device = {
   devEui: string;
@@ -24,5 +24,6 @@ export type Device = {
   type: DeviceType;
   status: DeviceState;
   ownerId: string; // ID del cliente dueño (client_id)
+  consumo?: number; // Metros cúbicos, sólo para tipo MEDIDOR
   lastUplink?: string; // Timestamp ISO 8601 del último reporte TTN
 };

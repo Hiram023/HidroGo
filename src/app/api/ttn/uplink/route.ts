@@ -16,21 +16,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Payload Incompleto' }, { status: 400 });
     }
 
-    // 3. Procesar datos del Milesight UC300 o UC511
-    // Supondremos que el payload decodificado trae un status tipo { "valve_1": "open" } o { "motor": "on" }
-    // En una implementación real se mapearía según el catálogo de Milesight
+    // 3. Procesamiento especializado por tipo de Nodo
     let newStatus = 'OFF';
+    let isMedidor = false;
+    let pulsosConteo = 0;
+
+    // A) Lógica para Válvulas y Pozos (Milesight UC300 / UC511)
     if (decodedPayload.valve_1 === 'open' || decodedPayload.motor === 'on' || decodedPayload.status === 1) {
       newStatus = 'ON';
     }
 
-    // 4. Actualizar estado en la base de datos y guardar el historial (History Logs)
-    console.log(`[TTN UPLINK] Recibido dato de nodo: ${devEui} - Nuevo estado: ${newStatus}`);
-    
-    // Suponiendo que el dispositivo ya está en "ON" (o algo), podemos hacer toggle 
-    // pero idealmente deberíamos hacer update directos. Para el MVP mantendremos
-    // usar toggleDeviceStatus si deseamos la interacción manual desde UI
-    await dbService.logDeviceHistory(devEui, newStatus, decodedPayload);
+    // B) Lógica para Medidores de Agua (Milesight EM300-DI u otros contadores de pulso)
+    if (decodedPayload.counter !== undefined || decodedPayload.count !== undefined) {
+      isMedidor = true;
+      pulsosConteo = Number(decodedPayload.counter || decodedPayload.count || 0);
+      newStatus = 'LECTURA';
+      
+      // Matemática: Supongamos que 1 pulso = 10 Litros (0.01 Metros Cúbicos)
+      // Modificable según el medidor físico real
+      const factorConversion = 0.01; 
+      const consumoMetrosCubicos = pulsosConteo * factorConversion;
+      
+      console.log(`[TTN UPLINK - MEDIDOR] ${devEui} -> Pulsos: ${pulsosConteo} -> Consumo M3: ${consumoMetrosCubicos}`);
+      await dbService.updateDeviceConsumo(devEui, consumoMetrosCubicos, decodedPayload);
+    } else {
+      // Si no es medidor, procesamos como ON/OFF normal
+      console.log(`[TTN UPLINK - CONTROL] Recibido dato de nodo: ${devEui} - Nuevo estado: ${newStatus}`);
+      await dbService.logDeviceHistory(devEui, newStatus, decodedPayload);
+    }
 
     return NextResponse.json({ success: true, message: 'Estado e historial actualizado' }, { status: 200 });
   } catch (error) {

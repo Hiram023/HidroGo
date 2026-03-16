@@ -120,5 +120,29 @@ export const dbService = {
     } catch (error) {
       console.error("Error guardando historial:", error);
     }
+  },
+
+  // Actualizar Consumo en Metros Cúbicos para Nodos EM300-DI
+  updateDeviceConsumo: async (devEui: string, consumo: number, fullPayload: any) => {
+    try {
+      const deviceRef = doc(db, "devices", devEui);
+      // Actualizamos el consumo en el dispositivo y la fecha
+      await updateDoc(deviceRef, {
+        consumo,
+        status: "LECTURA",
+        lastUplink: new Date().toISOString()
+      });
+      
+      // Guardamos la lectura en el historial
+      await addDoc(collection(db, "history_logs"), {
+        devEui,
+        status: "LECTURA",
+        consumo,
+        payload: fullPayload,
+        timestamp: serverTimestamp()
+      });
+    } catch (error) {
+      console.error("Error actualizando consumo:", error);
+    }
   }
 };
