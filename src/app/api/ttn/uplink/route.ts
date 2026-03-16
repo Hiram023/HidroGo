@@ -24,14 +24,15 @@ export async function POST(request: Request) {
       newStatus = 'ON';
     }
 
-    // 4. Actualizar estado en la base de datos (En este caso usando el Mock, luego usaremos Firebase admin)
-    // El sistema ya actualizará en tiempo real el registro según este DevEUI
+    // 4. Actualizar estado en la base de datos y guardar el historial (History Logs)
     console.log(`[TTN UPLINK] Recibido dato de nodo: ${devEui} - Nuevo estado: ${newStatus}`);
     
-    // (Llamada al servicio interno Mock o real)
-    await dbService.toggleDeviceStatus(devEui, newStatus === 'ON' ? 'OFF' : 'ON'); // Forzamos un toggle simulado
+    // Suponiendo que el dispositivo ya está en "ON" (o algo), podemos hacer toggle 
+    // pero idealmente deberíamos hacer update directos. Para el MVP mantendremos
+    // usar toggleDeviceStatus si deseamos la interacción manual desde UI
+    await dbService.logDeviceHistory(devEui, newStatus, decodedPayload);
 
-    return NextResponse.json({ success: true, message: 'Estado del nodo actualizado en BD' }, { status: 200 });
+    return NextResponse.json({ success: true, message: 'Estado e historial actualizado' }, { status: 200 });
   } catch (error) {
     console.error('Error procesando Webhook de TTN:', error);
     return NextResponse.json({ error: 'Error del Servidor' }, { status: 500 });

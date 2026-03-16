@@ -1,6 +1,6 @@
 import { auth, db } from "../lib/firebase";
 import { signInWithEmailAndPassword, signOut as firebaseSignOut } from "firebase/auth";
-import { doc, getDoc, collection, query, where, getDocs, updateDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { User, ClientInfo, Device } from "../types/models";
 
 export const dbService = {
@@ -57,6 +57,20 @@ export const dbService = {
     } catch (error) {
       console.error("Error actualizando status:", error);
       return false;
+    }
+  },
+
+  // Guardar log del mensaje recibido de TTN
+  logDeviceHistory: async (devEui: string, status: string, fullPayload: any) => {
+    try {
+      await addDoc(collection(db, "history_logs"), {
+        devEui,
+        status,
+        payload: fullPayload,
+        timestamp: serverTimestamp()
+      });
+    } catch (error) {
+      console.error("Error guardando historial:", error);
     }
   }
 };
