@@ -18,7 +18,6 @@ export async function POST(request: Request) {
 
     // 3. Procesamiento especializado por tipo de Nodo
     let newStatus = 'OFF';
-    let isMedidor = false;
     let pulsosConteo = 0;
 
     // A) Lógica para Válvulas y Pozos (Milesight UC300 / UC511)
@@ -28,7 +27,6 @@ export async function POST(request: Request) {
 
     // B) Lógica para Medidores de Agua (Milesight EM300-DI u otros contadores de pulso)
     if (decodedPayload.counter !== undefined || decodedPayload.count !== undefined) {
-      isMedidor = true;
       pulsosConteo = Number(decodedPayload.counter || decodedPayload.count || 0);
       newStatus = 'LECTURA';
       

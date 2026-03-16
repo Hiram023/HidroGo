@@ -7,7 +7,7 @@ const users: User[] = [
 ];
 
 const clients: ClientInfo[] = [
-  { id: "c_123", name: "Rancho El Sol", contactEmail: "contacto@elsol.com" }
+  { id: "c_123", name: "Rancho El Sol", email: "contacto@elsol.com" }
 ];
 
 let devices: Device[] = [
