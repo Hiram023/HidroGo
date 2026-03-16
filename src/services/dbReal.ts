@@ -1,6 +1,7 @@
-import { auth, db } from "../lib/firebase";
-import { signInWithEmailAndPassword, signOut as firebaseSignOut } from "firebase/auth";
-import { doc, getDoc, collection, query, where, getDocs, updateDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db, firebaseConfig } from "../lib/firebase";
+import { signInWithEmailAndPassword, signOut as firebaseSignOut, getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, addDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { initializeApp, deleteApp } from "firebase/app";
 import { User, ClientInfo, Device } from "../types/models";
 
 export const dbService = {
@@ -38,6 +39,52 @@ export const dbService = {
   getAllDevices: async () => {
     const querySnapshot = await getDocs(collection(db, "devices"));
     return querySnapshot.docs.map((doc: any) => ({ devEui: doc.id, ...doc.data() })) as Device[];
+  },
+
+  // Crear cliente (Usuario + Cliente Info + Dispositivo)
+  createClientUser: async (name: string, email: string, devEui: string) => {
+    try {
+      // Usar Secondary App para no alterar la sesión del Super Admin
+      const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp" + Date.now());
+      const secondaryAuth = getAuth(secondaryApp);
+      
+      const tempPassword = "HidroGo2026*"; // Contraseña genérica MVP
+      const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, tempPassword);
+      const uid = userCred.user.uid;
+      
+      await firebaseSignOut(secondaryAuth);
+      await deleteApp(secondaryApp);
+
+      // Ahora insertamos en DB con el Auth Principal (Super Admin)
+      const clientId = uid; 
+
+      // 1. Doc en 'users'
+      await setDoc(doc(db, "users", uid), {
+        email,
+        role: "CLIENT",
+        clientId
+      });
+
+      // 2. Doc en 'clients'
+      await setDoc(doc(db, "clients", clientId), {
+        name,
+        email,
+        valves: 1
+      });
+
+      // 3. Doc en 'devices'
+      await setDoc(doc(db, "devices", devEui), {
+        name: "Válvula 1",
+        type: "VÁLVULA",
+        status: "OFF",
+        ownerId: clientId
+      });
+
+      return { success: true, tempPassword };
+    } catch (error: any) {
+      console.error("Error creando cliente completo:", error);
+      return { success: false, error: error.message };
+    }
   },
   
   // Funciones CLIENTE (Con Filtro Multitenant en DB)
