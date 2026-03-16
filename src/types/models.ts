@@ -4,7 +4,8 @@ export type User = {
   uid: string;
   email: string;
   role: Role;
-  clientId?: string; // Solo los CLIENT tienen esto para filtrar datos
+  clientId?: string;
+  mustChangePassword?: boolean; // true = primer inicio, forzar cambio
 };
 
 export type ClientInfo = {

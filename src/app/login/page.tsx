@@ -27,7 +27,12 @@ export default function LoginPage() {
           router.push("/admin");
         } else if (user.role === "CLIENT") {
           sessionStorage.setItem("userContext", JSON.stringify(user));
-          router.push("/dashboard");
+          // Si tiene flag de cambio obligatorio, redirigir a cambiar contraseña
+          if (user.mustChangePassword) {
+            router.push("/cambiar-password");
+          } else {
+            router.push("/dashboard");
+          }
         }
       } else {
         setError("Usuario o contraseña incorrectos.");

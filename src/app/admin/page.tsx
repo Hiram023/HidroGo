@@ -30,7 +30,7 @@ export default function AdminDashboard() {
   const [message, setMessage] = useState<{text: string, type: "error" | "success"} | null>(null);
 
   // Form States
-  const [newClient, setNewClient] = useState({ name: "", email: "", devEui: "" });
+  const [newClient, setNewClient] = useState({ name: "", email: "", devEui: "", password: "" });
   const [newDevice, setNewDevice] = useState({ devEui: "", name: "", type: "VALVULA" as DeviceType, ownerId: "" });
 
   useEffect(() => {
@@ -61,11 +61,11 @@ export default function AdminDashboard() {
     setIsSubmitting(true);
     setMessage(null);
 
-    const result = await dbService.createClientUser(newClient.name, newClient.email, newClient.devEui);
+    const result = await dbService.createClientUser(newClient.name, newClient.email, newClient.devEui, newClient.password || undefined);
 
     if (result.success) {
-      setMessage({ text: `Exito. Contraseña temporal cliente: ${result.tempPassword}`, type: "success" });
-      setNewClient({ name: "", email: "", devEui: "" });
+      setMessage({ text: `Éxito. Contraseña del cliente: ${result.tempPassword}`, type: "success" });
+      setNewClient({ name: "", email: "", devEui: "", password: "" });
       setShowClientForm(false);
       loadData(); 
       alert(`Cliente Registrado\nCorreo: ${newClient.email}\nContraseña Temporal: ${result.tempPassword}`);
@@ -186,8 +186,12 @@ export default function AdminDashboard() {
                     <input type="email" className="input-field" value={newClient.email} onChange={(e) => setNewClient({...newClient, email: e.target.value})} required />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Primer TTN DevEUI (Nodo Central Opcional)</label>
-                    <input type="text" className="input-field" placeholder="Ej. A84041000181XXXX" value={newClient.devEui} onChange={(e) => setNewClient({...newClient, devEui: e.target.value})} required />
+                    <label>Contraseña Inicial (Opcional: Déjala vacía para usar HidroGo2026*)</label>
+                    <input type="text" className="input-field" placeholder="Si dejas vacío se usará: HidroGo2026*" value={newClient.password} onChange={(e) => setNewClient({...newClient, password: e.target.value})} />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Primer TTN DevEUI (Nodo Opcional)</label>
+                    <input type="text" className="input-field" placeholder="Ej. A84041000181XXXX" value={newClient.devEui} onChange={(e) => setNewClient({...newClient, devEui: e.target.value})} />
                   </div>
                   <button type="submit" className="btn-primary" disabled={isSubmitting}>
                     {isSubmitting ? "Creando..." : "Registrar Cliente e Inyectar Nodos"}

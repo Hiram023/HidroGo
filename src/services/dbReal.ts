@@ -42,14 +42,14 @@ export const dbService = {
   },
 
   // Crear cliente (Usuario + Cliente Info + Dispositivo)
-  createClientUser: async (name: string, email: string, devEui: string) => {
+  createClientUser: async (name: string, email: string, devEui: string, customPassword?: string) => {
     try {
       // Usar Secondary App para no alterar la sesión del Super Admin
       const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp" + Date.now());
       const secondaryAuth = getAuth(secondaryApp);
       
-      const tempPassword = "HidroGo2026*"; // Contraseña genérica MVP
-      const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, tempPassword);
+      const password = customPassword || "HidroGo2026*";
+      const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
       const uid = userCred.user.uid;
       
       await firebaseSignOut(secondaryAuth);
@@ -58,11 +58,12 @@ export const dbService = {
       // Ahora insertamos en DB con el Auth Principal (Super Admin)
       const clientId = uid; 
 
-      // 1. Doc en 'users'
+      // 1. Doc en 'users' CON flag de cambio obligatorio de contraseña
       await setDoc(doc(db, "users", uid), {
         email,
         role: "CLIENT",
-        clientId
+        clientId,
+        mustChangePassword: true
       });
 
       // 2. Doc en 'clients'
@@ -74,14 +75,16 @@ export const dbService = {
       });
 
       // 3. Doc en 'devices'
-      await setDoc(doc(db, "devices", devEui), {
-        name: "Válvula 1",
-        type: "VÁLVULA",
-        status: "OFF",
-        ownerId: clientId
-      });
+      if (devEui && devEui.trim() !== "") {
+        await setDoc(doc(db, "devices", devEui), {
+          name: "Dispositivo 1",
+          type: "VALVULA",
+          status: "OFF",
+          ownerId: clientId
+        });
+      }
 
-      return { success: true, tempPassword };
+      return { success: true, tempPassword: password };
     } catch (error: any) {
       console.error("Error creando cliente completo:", error);
       return { success: false, error: error.message };
