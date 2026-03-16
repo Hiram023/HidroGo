@@ -1,37 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./admin.module.css";
+import { dbService } from "../../services/dbReal";
 
 type Client = {
   id: string;
   name: string;
   email: string;
-  devEui: string;
-  valves: number;
+  devEui?: string;
+  valves?: number;
 };
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [clients, setClients] = useState<Client[]>([
-    { id: "1", name: "Rancho El Sol", email: "contacto@elsol.com", devEui: "A84041000181XXXX", valves: 4 },
-    { id: "2", name: "Agrícola Sonora", email: "admin@agrison.mx", devEui: "A84041000181YYYY", valves: 12 },
-  ]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [showForm, setShowForm] = useState(false);
   const [newClient, setNewClient] = useState({ name: "", email: "", devEui: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<{text: string, type: "error" | "success"} | null>(null);
 
-  const handleLogout = () => {
+  useEffect(() => {
+    loadClients();
+  }, []);
+
+  const loadClients = async () => {
+    setLoading(true);
+    try {
+      const data = await dbService.getAllClients();
+      setClients(data as Client[]);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await dbService.signOut();
     router.push("/login");
   };
 
-  const handleAddClient = (e: React.FormEvent) => {
+  const handleAddClient = async (e: React.FormEvent) => {
     e.preventDefault();
-    const id = Math.random().toString(36).substring(7);
-    setClients([...clients, { ...newClient, id, valves: 0 }]);
-    setNewClient({ name: "", email: "", devEui: "" });
-    setShowForm(false);
+    setIsSubmitting(true);
+    setMessage(null);
+
+    const result = await dbService.createClientUser(newClient.name, newClient.email, newClient.devEui);
+
+    if (result.success) {
+      setMessage({ text: `Exito. Contraseña temporal cliente: ${result.tempPassword}`, type: "success" });
+      setNewClient({ name: "", email: "", devEui: "" });
+      setShowForm(false);
+      loadClients(); // Refrescar tabla
+      alert(`Cliente Registrado\nCorreo: ${newClient.email}\nContraseña Temporal: ${result.tempPassword}`);
+    } else {
+      setMessage({ text: `Error: ${result.error}`, type: "error" });
+    }
+    
+    setIsSubmitting(false);
   };
 
   return (

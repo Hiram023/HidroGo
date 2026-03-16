@@ -69,6 +69,7 @@ export const dbService = {
       await setDoc(doc(db, "clients", clientId), {
         name,
         email,
+        devEui,
         valves: 1
       });
 

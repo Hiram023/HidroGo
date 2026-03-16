@@ -10,7 +10,9 @@ export type User = {
 export type ClientInfo = {
   id: string; // client_id
   name: string;
-  contactEmail: string;
+  email: string;
+  devEui?: string;
+  valves?: number;
 };
 
 export type DeviceType = "POZO" | "VALVULA";
