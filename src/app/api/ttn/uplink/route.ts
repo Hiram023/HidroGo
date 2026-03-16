@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { dbService } from '../../../../../services/dbMock';
+import { dbService } from '../../../../services/dbReal';
 
 // Este Endpoint será llamado por The Things Network cada vez que un sensor LoRa envíe datos (Uplink)
 export async function POST(request: Request) {
