@@ -32,19 +32,19 @@ export const dbService = {
   // Funciones SUPER ADMIN
   getAllClients: async () => {
     const querySnapshot = await getDocs(collection(db, "clients"));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ClientInfo[];
+    return querySnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })) as ClientInfo[];
   },
   
   getAllDevices: async () => {
     const querySnapshot = await getDocs(collection(db, "devices"));
-    return querySnapshot.docs.map(doc => ({ devEui: doc.id, ...doc.data() })) as Device[];
+    return querySnapshot.docs.map((doc: any) => ({ devEui: doc.id, ...doc.data() })) as Device[];
   },
   
   // Funciones CLIENTE (Con Filtro Multitenant en DB)
   getClientDevices: async (clientId: string) => {
     const q = query(collection(db, "devices"), where("ownerId", "==", clientId));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ devEui: doc.id, ...doc.data() })) as Device[];
+    return querySnapshot.docs.map((doc: any) => ({ devEui: doc.id, ...doc.data() })) as Device[];
   },
 
   // Actualizar estado en Firebase Firestore
