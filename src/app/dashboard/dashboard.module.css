@@ -17,13 +17,8 @@
   flex-wrap: wrap;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-}
+.brand { display: flex; align-items: center; gap: 0.8rem; }
 .brand h1 { color: var(--primary); margin: 0; font-size: 1.4rem; }
-
 .roleBadge {
   background-color: #dcfce7;
   color: #166534;
@@ -33,234 +28,128 @@
   font-weight: 600;
 }
 
-/* ── Tabs ──────────────────────────────────────── */
-.tabNav { display: flex; gap: 0.5rem; }
+/* Tabs */
+.tabNav { display: flex; gap: 0.4rem; }
 .tabBtn {
-  padding: 0.5rem 1.2rem;
+  padding: 0.5rem 1.4rem;
   border-radius: 8px;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-muted);
-  border: 1px solid transparent;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  background: transparent;
-}
-.tabBtn:hover { background: rgba(14,165,233,0.06); }
-.tabActive {
-  background: rgba(14,165,233,0.1);
-  color: #0ea5e9;
-  border-color: rgba(14,165,233,0.3);
-  font-weight: 600;
-}
-
-.userInfo {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
-
-.logoutBtn {
-  color: #ef4444;
-  font-weight: 500;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
   border: 1px solid transparent;
   transition: all 0.2s;
   cursor: pointer;
   background: transparent;
 }
+.tabBtn:hover { background: rgba(14,165,233,0.06); color: var(--text-main); }
+.tabActive {
+  background: rgba(14,165,233,0.12);
+  color: #0ea5e9;
+  border-color: rgba(14,165,233,0.3);
+  font-weight: 600;
+}
+
+.userInfo { display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.85rem; }
+.logoutBtn {
+  color: #ef4444; font-weight: 500; padding: 0.4rem 0.8rem;
+  border-radius: 6px; border: 1px solid transparent;
+  transition: all 0.2s; cursor: pointer; background: transparent;
+}
 .logoutBtn:hover { background-color: #fee2e2; border-color: #fca5a5; }
 
-.mainContent {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-}
+.mainContent { padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
 
-/* ── Consumo Total ────────────────────────────── */
+/* Consumo Total */
 .consumoSection { margin-bottom: 2rem; }
-
 .consumoCard {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 2rem 2.5rem;
+  display: flex; align-items: center; gap: 1.5rem; padding: 2rem 2.5rem;
   background: linear-gradient(135deg, rgba(14,165,233,0.08), rgba(34,197,94,0.06));
   border: 1px solid rgba(14,165,233,0.2);
-}
-.consumoIcon {
-  font-size: 3rem;
-  background: linear-gradient(135deg, #0ea5e9, #22c55e);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 .consumoData { flex: 1; display: flex; flex-direction: column; }
 .consumoLabel { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
 .consumoValue { font-size: 2.6rem; font-weight: 800; color: #0ea5e9; line-height: 1; }
 .consumoMeta { color: var(--text-muted); font-size: 0.8rem; }
+.consumoCell { color: #0ea5e9; }
 
-/* ── Medidores Individuales ───────────────────── */
-.medidoresGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2.5rem;
-}
-.medidorCard {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.2rem 1.5rem;
-}
-.medidorIcon { font-size: 1.5rem; }
+/* Medidores individuales */
+.medidoresGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+.medidorCard { display: flex; align-items: center; gap: 1rem; padding: 1.2rem 1.5rem; }
 .medidorInfo { flex: 1; display: flex; flex-direction: column; }
 .medidorName { font-weight: 600; color: var(--text-main); font-size: 0.95rem; }
 .medidorValue { color: #0ea5e9; font-weight: 700; font-size: 1.3rem; }
-.medidorEui { font-size: 0.75rem; color: var(--text-muted); }
-.medidorEui code { font-family: monospace; background: var(--bg-primary); padding: 0.15rem 0.35rem; border-radius: 4px; }
 
-/* ── Section Titles ───────────────────────────── */
-.sectionTitle {
-  font-size: 1.4rem;
-  color: var(--text-main);
-  margin: 2rem 0 1rem;
-}
-.welcomeSection { margin-bottom: 1.5rem; }
-.welcomeSection h2 { font-size: 1.5rem; color: var(--text-main); margin-bottom: 0.3rem; }
-.welcomeSection p { color: var(--text-muted); }
+/* Secciones de Operaciones */
+.opsSection { margin-bottom: 2.5rem; }
+.sectionTitle { font-size: 1.3rem; color: var(--text-main); margin: 0 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color); }
 
-/* ── Devices Grid ─────────────────────────────── */
-.devicesGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-.deviceCard {
-  background-color: var(--bg-secondary);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+/* Grid de dispositivos */
+.devicesGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.2rem; }
+.deviceCard { background-color: var(--bg-secondary); display: flex; flex-direction: column; overflow: hidden; }
 .cardHeader {
-  padding: 1.2rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
+  padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border-color);
+  display: flex; align-items: center; gap: 0.8rem;
 }
-.deviceTypeIcon { font-size: 1.8rem; }
-.cardHeader h3 { margin: 0; flex: 1; color: var(--text-main); font-size: 1.1rem; }
+.cardHeader h3 { margin: 0; flex: 1; color: var(--text-main); font-size: 1.05rem; }
 
-.statusBadge {
-  padding: 0.2rem 0.6rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
+.statusBadge { padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
 .statusOn { background-color: #dcfce7; color: #16a34a; }
 .statusOff { background-color: #f1f5f9; color: #64748b; }
 
-.cardBody { padding: 1.2rem 1.5rem; display: flex; flex-direction: column; gap: 0.6rem; }
-.infoRow { display: flex; justify-content: space-between; align-items: center; }
-.label { color: var(--text-muted); font-size: 0.85rem; }
-.value { color: var(--text-main); font-weight: 500; font-size: 0.9rem; }
-.code { font-family: monospace; background-color: var(--bg-primary); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.8rem; }
-
-.cardAction { padding: 1.2rem 1.5rem; padding-top: 0; margin-top: auto; }
-.actionBtn {
-  width: 100%;
-  padding: 0.85rem;
-  font-size: 1rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+.cardAction { padding: 1.2rem 1.5rem; margin-top: auto; }
+.actionBtn { width: 100%; padding: 0.75rem; font-size: 0.95rem; display: flex; justify-content: center; }
 .btnSuccess { background-color: var(--secondary); }
 .btnSuccess:hover { background-color: var(--secondary-hover); }
 .btnDanger { background-color: #ef4444; }
 .btnDanger:hover { background-color: #dc2626; }
 
-/* ── Valve Groups ─────────────────────────────── */
-.valveGroup {
-  padding: 1.5rem;
-  margin-bottom: 1.2rem;
-}
+/* Valve Groups */
+.valveGroup { padding: 1.5rem; margin-bottom: 1rem; }
 .groupHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.8rem;
-  border-bottom: 1px solid var(--border-color);
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--border-color);
 }
-.groupHeader h3 { margin: 0; color: var(--text-main); font-size: 1.15rem; }
+.groupHeader h3 { margin: 0; color: var(--text-main); font-size: 1.1rem; }
 .groupActions { display: flex; gap: 0.5rem; }
-.groupValves { display: flex; flex-direction: column; gap: 0.6rem; }
+.groupValves { display: flex; flex-direction: column; gap: 0.5rem; }
 .valveItem {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.6rem 0.8rem;
-  border-radius: 8px;
-  background: var(--bg-primary);
+  display: flex; align-items: center; gap: 1rem;
+  padding: 0.6rem 0.8rem; border-radius: 8px; background: var(--bg-primary);
 }
 .valveName { flex: 1; font-weight: 500; color: var(--text-main); font-size: 0.9rem; }
 
-/* ── History Table ────────────────────────────── */
+/* History Table */
 .historySection { margin-top: 1rem; }
-.historyHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-.historyHeader h2 { font-size: 1.4rem; color: var(--text-main); margin: 0; }
+.historyHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.historyHeader h2 { font-size: 1.3rem; color: var(--text-main); margin: 0; }
 .tableContainer { overflow-x: auto; }
 .historyTable { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .historyTable thead { background-color: var(--bg-primary); }
 .historyTable th {
-  text-align: left;
-  padding: 0.8rem 1rem;
-  color: var(--text-muted);
-  font-weight: 600;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 2px solid var(--border-color);
+  text-align: left; padding: 0.8rem 1rem; color: var(--text-muted);
+  font-weight: 600; font-size: 0.75rem; text-transform: uppercase;
+  letter-spacing: 0.05em; border-bottom: 2px solid var(--border-color);
 }
 .historyTable td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
 .historyTable tbody tr:hover { background-color: rgba(14,165,233,0.04); }
+.emptyRow { text-align: center; padding: 2rem; color: #94a3b8; }
 
-/* ── Misc ─────────────────────────────────────── */
+/* Misc */
 .loading {
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  color: var(--primary);
-  background-color: var(--bg-primary);
+  height: 100vh; display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; color: var(--primary); background-color: var(--bg-primary);
 }
 .noDevices {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 3rem;
-  border-radius: var(--border-radius);
-  color: var(--text-muted);
-  border: 1px dashed var(--border-color);
+  text-align: center; padding: 3rem; border-radius: var(--border-radius);
+  color: var(--text-muted); border: 1px dashed var(--border-color);
 }
 
-/* ── Responsive ───────────────────────────────── */
+/* Responsive */
 @media (max-width: 768px) {
   .header { flex-direction: column; align-items: flex-start; }
   .mainContent { padding: 1rem; }
   .consumoCard { flex-direction: column; text-align: center; padding: 1.5rem; }
   .consumoValue { font-size: 2rem; }
   .historyHeader { flex-direction: column; gap: 0.8rem; align-items: flex-start; }
+  .groupHeader { flex-direction: column; gap: 0.6rem; align-items: flex-start; }
 }

@@ -33,6 +33,7 @@ export default function AdminDashboard() {
   // Edit States
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [editingDevice, setEditingDevice] = useState<Device | null>(null);
+  const [originalDevEui, setOriginalDevEui] = useState<string>("");
 
   useEffect(() => { loadData(); }, []);
 
@@ -147,17 +148,35 @@ export default function AdminDashboard() {
     if (!editingDevice) return;
     setIsSubmitting(true);
     try {
-      const { doc, updateDoc } = await import("firebase/firestore");
+      const { doc, setDoc, deleteDoc, getDoc } = await import("firebase/firestore");
       const { db } = await import("../../lib/firebase");
+      const newEui = editingDevice.devEui.trim();
       const updateData: any = {
         name: editingDevice.name,
         type: editingDevice.type,
         ownerId: editingDevice.ownerId,
       };
       if (editingDevice.group !== undefined) updateData.group = editingDevice.group || null;
-      await updateDoc(doc(db, "devices", editingDevice.devEui), updateData);
-      setMessage({ text: "Nodo actualizado", type: "success" });
+      if (editingDevice.consumo !== undefined) updateData.consumo = editingDevice.consumo;
+      updateData.status = editingDevice.status || "OFF";
+
+      // Si el DevEUI cambió, migrar el documento
+      if (newEui !== originalDevEui) {
+        // Leer doc viejo por si tiene campos que no trackeamos
+        const oldSnap = await getDoc(doc(db, "devices", originalDevEui));
+        const oldData = oldSnap.exists() ? oldSnap.data() : {};
+        // Crear nuevo con datos combinados
+        await setDoc(doc(db, "devices", newEui), { ...oldData, ...updateData });
+        // Borrar el viejo
+        await deleteDoc(doc(db, "devices", originalDevEui));
+        setMessage({ text: `DevEUI migrado de ${originalDevEui} a ${newEui}`, type: "success" });
+      } else {
+        const { updateDoc } = await import("firebase/firestore");
+        await updateDoc(doc(db, "devices", newEui), updateData);
+        setMessage({ text: "Nodo actualizado", type: "success" });
+      }
       setEditingDevice(null);
+      setOriginalDevEui("");
       loadData();
     } catch (error: any) {
       setMessage({ text: `Error: ${error.message}`, type: "error" });
@@ -305,8 +324,8 @@ export default function AdminDashboard() {
                       <td>{devices.filter(d => d.ownerId === client.id).length} en red</td>
                       <td>
                         <div style={{ display: "flex", gap: "0.4rem" }}>
-                          <button className={styles.actionBtn} onClick={() => { setEditingClient(client); setShowClientForm(false); }}>✏️ Editar</button>
-                          <button className={styles.deleteBtnSmall} onClick={() => handleDeleteClient(client.id, client.name)}>🗑️</button>
+                          <button className={styles.actionBtn} onClick={() => { setEditingClient(client); setShowClientForm(false); }}>Editar</button>
+                          <button className={styles.deleteBtnSmall} onClick={() => handleDeleteClient(client.id, client.name)}>Eliminar</button>
                         </div>
                       </td>
                     </tr>
@@ -364,8 +383,12 @@ export default function AdminDashboard() {
             {/* Form Editar Nodo */}
             {editingDevice && (
               <div className={`glass-panel ${styles.formContainer}`}>
-                <h2>✏️ Editar Nodo: <code>{editingDevice.devEui}</code></h2>
+                <h2>Editar Nodo</h2>
                 <form onSubmit={handleEditDevice} className={styles.form}>
+                  <div className={styles.formGroup}>
+                    <label>DevEUI (Dirección MAC)</label>
+                    <input type="text" className="input-field" value={editingDevice.devEui} onChange={e => setEditingDevice({...editingDevice, devEui: e.target.value})} required />
+                  </div>
                   <div className={styles.formGroup}>
                     <label>Nombre</label>
                     <input type="text" className="input-field" value={editingDevice.name} onChange={e => setEditingDevice({...editingDevice, name: e.target.value})} required />
@@ -439,8 +462,8 @@ export default function AdminDashboard() {
                               {device.status === "ON" ? "Apagar" : "Encender"}
                             </button>
                           )}
-                          <button className={styles.actionBtn} onClick={() => { setEditingDevice(device); setShowDeviceForm(false); }}>✏️</button>
-                          <button className={styles.deleteBtnSmall} onClick={() => handleDeleteDevice(device.devEui, device.name)}>🗑️</button>
+                          <button className={styles.actionBtn} onClick={() => { setEditingDevice(device); setOriginalDevEui(device.devEui); setShowDeviceForm(false); }}>Editar</button>
+                          <button className={styles.deleteBtnSmall} onClick={() => handleDeleteDevice(device.devEui, device.name)}>Eliminar</button>
                         </div>
                       </td>
                     </tr>
