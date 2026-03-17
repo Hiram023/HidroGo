@@ -20,33 +20,8 @@
 .brand { display: flex; align-items: center; gap: 0.8rem; }
 .brand h1 { color: var(--primary); margin: 0; font-size: 1.4rem; }
 .roleBadge {
-  background-color: #dcfce7;
-  color: #166534;
-  padding: 0.2rem 0.6rem;
-  border-radius: 99px;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-/* Tabs */
-.tabNav { display: flex; gap: 0.4rem; }
-.tabBtn {
-  padding: 0.5rem 1.4rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  border: 1px solid transparent;
-  transition: all 0.2s;
-  cursor: pointer;
-  background: transparent;
-}
-.tabBtn:hover { background: rgba(14,165,233,0.06); color: var(--text-main); }
-.tabActive {
-  background: rgba(14,165,233,0.12);
-  color: #0ea5e9;
-  border-color: rgba(14,165,233,0.3);
-  font-weight: 600;
+  background-color: #dcfce7; color: #166534;
+  padding: 0.2rem 0.6rem; border-radius: 99px; font-size: 0.7rem; font-weight: 600;
 }
 
 .userInfo { display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.85rem; }
@@ -72,24 +47,25 @@
 .consumoMeta { color: var(--text-muted); font-size: 0.8rem; }
 .consumoCell { color: #0ea5e9; }
 
-/* Medidores individuales */
-.medidoresGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
-.medidorCard { display: flex; align-items: center; gap: 1rem; padding: 1.2rem 1.5rem; }
-.medidorInfo { flex: 1; display: flex; flex-direction: column; }
-.medidorName { font-weight: 600; color: var(--text-main); font-size: 0.95rem; }
-.medidorValue { color: #0ea5e9; font-weight: 700; font-size: 1.3rem; }
+/* Medidor individual + gráfica */
+.medidorSection { margin-bottom: 0.5rem; }
+.medidorCard {
+  display: flex; align-items: center; gap: 1rem; padding: 1.2rem 1.5rem;
+  justify-content: space-between;
+}
+.medidorInfo { display: flex; flex-direction: column; }
+.medidorName { font-weight: 600; color: var(--text-main); font-size: 1rem; }
+.medidorValue { color: #0ea5e9; font-weight: 700; font-size: 1.4rem; }
+.lastUplink { font-size: 0.75rem; color: var(--text-muted); }
 
-/* Secciones de Operaciones */
-.opsSection { margin-bottom: 2.5rem; }
+/* Sections */
+.opsSection { margin-bottom: 2rem; }
 .sectionTitle { font-size: 1.3rem; color: var(--text-main); margin: 0 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color); }
 
-/* Grid de dispositivos */
+/* Grid */
 .devicesGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.2rem; }
 .deviceCard { background-color: var(--bg-secondary); display: flex; flex-direction: column; overflow: hidden; }
-.cardHeader {
-  padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border-color);
-  display: flex; align-items: center; gap: 0.8rem;
-}
+.cardHeader { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.8rem; }
 .cardHeader h3 { margin: 0; flex: 1; color: var(--text-main); font-size: 1.05rem; }
 
 .statusBadge { padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
@@ -105,46 +81,40 @@
 
 /* Valve Groups */
 .valveGroup { padding: 1.5rem; margin-bottom: 1rem; }
-.groupHeader {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--border-color);
-}
+.groupHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--border-color); }
 .groupHeader h3 { margin: 0; color: var(--text-main); font-size: 1.1rem; }
 .groupActions { display: flex; gap: 0.5rem; }
 .groupValves { display: flex; flex-direction: column; gap: 0.5rem; }
-.valveItem {
-  display: flex; align-items: center; gap: 1rem;
-  padding: 0.6rem 0.8rem; border-radius: 8px; background: var(--bg-primary);
-}
+.valveItem { display: flex; align-items: center; gap: 1rem; padding: 0.6rem 0.8rem; border-radius: 8px; background: var(--bg-primary); }
 .valveName { flex: 1; font-weight: 500; color: var(--text-main); font-size: 0.9rem; }
 
 /* History Table */
-.historySection { margin-top: 1rem; }
+.historySection { margin-top: 2rem; }
 .historyHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .historyHeader h2 { font-size: 1.3rem; color: var(--text-main); margin: 0; }
 .tableContainer { overflow-x: auto; }
 .historyTable { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .historyTable thead { background-color: var(--bg-primary); }
-.historyTable th {
-  text-align: left; padding: 0.8rem 1rem; color: var(--text-muted);
-  font-weight: 600; font-size: 0.75rem; text-transform: uppercase;
-  letter-spacing: 0.05em; border-bottom: 2px solid var(--border-color);
-}
+.historyTable th { text-align: left; padding: 0.8rem 1rem; color: var(--text-muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-color); }
 .historyTable td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
 .historyTable tbody tr:hover { background-color: rgba(14,165,233,0.04); }
 .emptyRow { text-align: center; padding: 2rem; color: #94a3b8; }
 
 /* Misc */
-.loading {
-  height: 100vh; display: flex; align-items: center; justify-content: center;
-  font-size: 1.2rem; color: var(--primary); background-color: var(--bg-primary);
-}
-.noDevices {
-  text-align: center; padding: 3rem; border-radius: var(--border-radius);
-  color: var(--text-muted); border: 1px dashed var(--border-color);
-}
+.loading { height: 100vh; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--primary); background-color: var(--bg-primary); }
+.noDevices { text-align: center; padding: 3rem; border-radius: var(--border-radius); color: var(--text-muted); border: 1px dashed var(--border-color); }
 
-/* Responsive */
+/* Admin mirror dashboard specific styles */
+.adminActions { display: flex; gap: 0.4rem; margin-top: 0.5rem; padding: 0 1.5rem 1rem; }
+.editBtn, .deleteBtn {
+  padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.75rem;
+  font-weight: 500; cursor: pointer; border: none;
+}
+.editBtn { color: #0ea5e9; background: rgba(14,165,233,0.1); }
+.editBtn:hover { background: rgba(14,165,233,0.2); }
+.deleteBtn { color: #ef4444; background: rgba(239,68,68,0.1); }
+.deleteBtn:hover { background: rgba(239,68,68,0.2); }
+
 @media (max-width: 768px) {
   .header { flex-direction: column; align-items: flex-start; }
   .mainContent { padding: 1rem; }
