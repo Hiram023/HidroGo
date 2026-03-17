@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { dbService } from "../../services/dbReal";
-import { ConsumoLog } from "../../types/models";
+import { dbService } from "../services/dbReal";
+import { ConsumoLog } from "../types/models";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine
