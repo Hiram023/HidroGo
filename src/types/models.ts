@@ -16,7 +16,7 @@ export type ClientInfo = {
   valves?: number;
 };
 
-export type DeviceType = "POZO" | "VALVULA" | "MEDIDOR";
+export type DeviceType = "POZO" | "VALVULA" | "MEDIDOR" | "REBOMBEO";
 export type DeviceState = "ON" | "OFF";
 
 export type Device = {
@@ -25,17 +25,17 @@ export type Device = {
   type: DeviceType;
   status: DeviceState;
   ownerId: string;
-  consumo?: number;       // Metros cúbicos acumulados (solo MEDIDOR)
-  lastUplink?: string;    // ISO 8601
+  consumo?: number;        // Metros cúbicos acumulados (solo MEDIDOR)
+  lastUplink?: string;     // ISO 8601
+  group?: string;          // Agrupación para válvulas (ej: "Sección Norte")
 };
 
-// Registro individual de telemetría del EM300-DI
 export type ConsumoLog = {
   id?: string;
   devEui: string;
-  consumo: number;         // Valor de "pulses" (ya en volumen procesado)
+  consumo: number;
   battery?: number;
   humidity?: number;
   temperature?: number;
-  timestamp: any;          // Firestore Timestamp o Date
+  timestamp: any;
 };

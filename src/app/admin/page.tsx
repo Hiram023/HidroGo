@@ -16,13 +16,10 @@ type Client = {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  
-  // Data States
   const [clients, setClients] = useState<Client[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // UI States
   const [activeTab, setActiveTab] = useState<"clients" | "devices">("clients");
   const [showClientForm, setShowClientForm] = useState(false);
   const [showDeviceForm, setShowDeviceForm] = useState(false);
@@ -31,106 +28,174 @@ export default function AdminDashboard() {
 
   // Form States
   const [newClient, setNewClient] = useState({ name: "", email: "", devEui: "", password: "" });
-  const [newDevice, setNewDevice] = useState({ devEui: "", name: "", type: "VALVULA" as DeviceType, ownerId: "" });
+  const [newDevice, setNewDevice] = useState({ devEui: "", name: "", type: "VALVULA" as DeviceType, ownerId: "", group: "" });
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Edit States
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [editingDevice, setEditingDevice] = useState<Device | null>(null);
+
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const clientsData = await dbService.getAllClients();
-      const devicesData = await dbService.getAllDevices();
+      const [clientsData, devicesData] = await Promise.all([
+        dbService.getAllClients(),
+        dbService.getAllDevices()
+      ]);
       setClients(clientsData as Client[]);
       setDevices(devicesData as Device[]);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
 
-  const handleLogout = async () => {
-    await dbService.signOut();
-    router.push("/login");
-  };
+  const handleLogout = async () => { await dbService.signOut(); router.push("/login"); };
+
+  // ─── CRUD Clientes ────────────────────────────────────────
 
   const handleAddClient = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setMessage(null);
-
     const result = await dbService.createClientUser(newClient.name, newClient.email, newClient.devEui, newClient.password || undefined);
-
     if (result.success) {
-      setMessage({ text: `Éxito. Contraseña del cliente: ${result.tempPassword}`, type: "success" });
+      setMessage({ text: `Cliente creado. Contraseña: ${result.tempPassword}`, type: "success" });
       setNewClient({ name: "", email: "", devEui: "", password: "" });
       setShowClientForm(false);
-      loadData(); 
-      alert(`Cliente Registrado\nCorreo: ${newClient.email}\nContraseña Temporal: ${result.tempPassword}`);
+      loadData();
+      alert(`Cliente Registrado\nCorreo: ${newClient.email}\nContraseña: ${result.tempPassword}`);
     } else {
       setMessage({ text: `Error: ${result.error}`, type: "error" });
     }
     setIsSubmitting(false);
   };
 
+  const handleEditClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingClient) return;
+    setIsSubmitting(true);
+    try {
+      const { doc, updateDoc } = await import("firebase/firestore");
+      const { db } = await import("../../lib/firebase");
+      await updateDoc(doc(db, "clients", editingClient.id), {
+        name: editingClient.name,
+        email: editingClient.email
+      });
+      // Also update in users collection if email changed
+      await updateDoc(doc(db, "users", editingClient.id), {
+        email: editingClient.email
+      });
+      setMessage({ text: "Cliente actualizado", type: "success" });
+      setEditingClient(null);
+      loadData();
+    } catch (error: any) {
+      setMessage({ text: `Error: ${error.message}`, type: "error" });
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleDeleteClient = async (clientId: string, clientName: string) => {
+    if (!confirm(`¿Seguro que quieres eliminar al cliente "${clientName}"? \n\nEsto eliminará su cuenta y todos sus nodos asociados.`)) return;
+    try {
+      const { doc, deleteDoc, collection, query, where, getDocs } = await import("firebase/firestore");
+      const { db } = await import("../../lib/firebase");
+      // Delete client devices
+      const devQ = query(collection(db, "devices"), where("ownerId", "==", clientId));
+      const devSnap = await getDocs(devQ);
+      for (const d of devSnap.docs) { await deleteDoc(d.ref); }
+      // Delete client doc
+      await deleteDoc(doc(db, "clients", clientId));
+      // Delete user doc
+      await deleteDoc(doc(db, "users", clientId));
+      setMessage({ text: `Cliente "${clientName}" eliminado`, type: "success" });
+      loadData();
+    } catch (error: any) {
+      setMessage({ text: `Error eliminando: ${error.message}`, type: "error" });
+    }
+  };
+
+  // ─── CRUD Nodos ───────────────────────────────────────────
+
   const handleAddDevice = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // Direct insertion in Firebase
       const { doc, setDoc } = await import("firebase/firestore");
       const { db } = await import("../../lib/firebase");
-      
-      const status = "OFF";
-      
-      await setDoc(doc(db, "devices", newDevice.devEui), {
+      const deviceData: any = {
         name: newDevice.name,
         type: newDevice.type,
-        status: status,
+        status: "OFF",
         ownerId: newDevice.ownerId,
-        consumo: newDevice.type === "MEDIDOR" ? 0 : undefined
-      });
-      
-      setMessage({ text: `Nodo ${newDevice.devEui} agregado con éxito`, type: "success" });
-      setNewDevice({ devEui: "", name: "", type: "VALVULA", ownerId: "" });
+      };
+      if (newDevice.type === "MEDIDOR") deviceData.consumo = 0;
+      if (newDevice.group.trim()) deviceData.group = newDevice.group.trim();
+
+      await setDoc(doc(db, "devices", newDevice.devEui), deviceData);
+      setMessage({ text: `Nodo ${newDevice.devEui} registrado`, type: "success" });
+      setNewDevice({ devEui: "", name: "", type: "VALVULA", ownerId: "", group: "" });
       setShowDeviceForm(false);
       loadData();
     } catch (error: any) {
-      setMessage({ text: `Error creando nodo: ${error.message}`, type: "error" });
-    } finally {
-      setIsSubmitting(false);
+      setMessage({ text: `Error: ${error.message}`, type: "error" });
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleEditDevice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDevice) return;
+    setIsSubmitting(true);
+    try {
+      const { doc, updateDoc } = await import("firebase/firestore");
+      const { db } = await import("../../lib/firebase");
+      const updateData: any = {
+        name: editingDevice.name,
+        type: editingDevice.type,
+        ownerId: editingDevice.ownerId,
+      };
+      if (editingDevice.group !== undefined) updateData.group = editingDevice.group || null;
+      await updateDoc(doc(db, "devices", editingDevice.devEui), updateData);
+      setMessage({ text: "Nodo actualizado", type: "success" });
+      setEditingDevice(null);
+      loadData();
+    } catch (error: any) {
+      setMessage({ text: `Error: ${error.message}`, type: "error" });
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleDeleteDevice = async (devEui: string, name: string) => {
+    if (!confirm(`¿Eliminar permanentemente el nodo "${name}" (${devEui})?`)) return;
+    try {
+      const { doc, deleteDoc } = await import("firebase/firestore");
+      const { db } = await import("../../lib/firebase");
+      await deleteDoc(doc(db, "devices", devEui));
+      setMessage({ text: `Nodo "${name}" eliminado`, type: "success" });
+      loadData();
+    } catch (error: any) {
+      setMessage({ text: `Error: ${error.message}`, type: "error" });
     }
   };
 
   const handleToggleDevice = async (devEui: string, currentStatus: string) => {
-    // Optimistic Update
     setDevices(devices.map(d => d.devEui === devEui ? { ...d, status: currentStatus === "ON" ? "OFF" : "ON" } as Device : d));
-    
-    // API Call
     try {
-      const response = await fetch('/api/ttn/downlink', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          devEui, 
-          command: currentStatus === "ON" ? "OFF" : "ON" 
-        })
+      const res = await fetch('/api/ttn/downlink', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ devEui, command: currentStatus === "ON" ? "OFF" : "ON" })
       });
-      if(!response.ok) throw new Error("Error en TTN");
+      if (!res.ok) throw new Error("TTN error");
       await dbService.toggleDeviceStatus(devEui, currentStatus);
-    } catch(err) {
-      console.error("Revertiendo optimist toggle", err);
-      // Revert if error
+    } catch (err) {
       setDevices(devices.map(d => d.devEui === devEui ? { ...d, status: currentStatus } as Device : d));
-      alert("Error enviando comando al nodo físico.");
+      alert("Error enviando comando.");
     }
   };
 
   const getClientName = (ownerId: string) => {
     const c = clients.find(c => c.id === ownerId);
-    return c ? c.name : "Desconocido (" + ownerId + ")";
+    return c ? c.name : ownerId.slice(0, 8) + "...";
   };
 
   return (
@@ -143,22 +208,19 @@ export default function AdminDashboard() {
         <nav className={styles.nav}>
           <a href="#" className={activeTab === "clients" ? styles.active : ""} onClick={() => setActiveTab("clients")}>Gestión de Clientes</a>
           <a href="#" className={activeTab === "devices" ? styles.active : ""} onClick={() => setActiveTab("devices")}>Nodos Globales (IoT)</a>
-          <a href="#">Reportes de Red</a>
         </nav>
-        <button className={styles.logoutBtn} onClick={handleLogout}>
-          Cerrar Sesión
-        </button>
+        <button className={styles.logoutBtn} onClick={handleLogout}>Cerrar Sesión</button>
       </aside>
 
       <main className={styles.mainContent}>
         <header className={styles.header}>
           <h1>{activeTab === "clients" ? "Panel de Clientes" : "Control de Nodos IoT"}</h1>
           {activeTab === "clients" ? (
-            <button className="btn-primary" onClick={() => setShowClientForm(!showClientForm)}>
+            <button className="btn-primary" onClick={() => { setShowClientForm(!showClientForm); setEditingClient(null); }}>
               {showClientForm ? "Cancelar" : "+ Nuevo Cliente"}
             </button>
           ) : (
-            <button className="btn-primary" onClick={() => setShowDeviceForm(!showDeviceForm)}>
+            <button className="btn-primary" onClick={() => { setShowDeviceForm(!showDeviceForm); setEditingDevice(null); }}>
               {showDeviceForm ? "Cancelar" : "+ Asignar Nodo"}
             </button>
           )}
@@ -170,43 +232,68 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* TAB: CLIENTES */}
+        {/* ═══════ TAB: CLIENTES ═══════ */}
         {activeTab === "clients" && (
           <>
-            {showClientForm && (
+            {/* Form Crear Cliente */}
+            {showClientForm && !editingClient && (
               <div className={`glass-panel ${styles.formContainer}`}>
                 <h2>Alta de Nuevo Cliente</h2>
                 <form onSubmit={handleAddClient} className={styles.form}>
                   <div className={styles.formGroup}>
-                    <label>Nombre de la Agrícola / Rancho</label>
-                    <input type="text" className="input-field" value={newClient.name} onChange={(e) => setNewClient({...newClient, name: e.target.value})} required />
+                    <label>Nombre del Rancho / Agrícola</label>
+                    <input type="text" className="input-field" value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})} required />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Correo Electrónico (Para que él inicie sesión)</label>
-                    <input type="email" className="input-field" value={newClient.email} onChange={(e) => setNewClient({...newClient, email: e.target.value})} required />
+                    <label>Correo Electrónico (Login)</label>
+                    <input type="email" className="input-field" value={newClient.email} onChange={e => setNewClient({...newClient, email: e.target.value})} required />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Contraseña Inicial (Opcional: Déjala vacía para usar HidroGo2026*)</label>
-                    <input type="text" className="input-field" placeholder="Si dejas vacío se usará: HidroGo2026*" value={newClient.password} onChange={(e) => setNewClient({...newClient, password: e.target.value})} />
+                    <label>Contraseña (Vacío = HidroGo2026*)</label>
+                    <input type="text" className="input-field" placeholder="HidroGo2026*" value={newClient.password} onChange={e => setNewClient({...newClient, password: e.target.value})} />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Primer TTN DevEUI (Nodo Opcional)</label>
-                    <input type="text" className="input-field" placeholder="Ej. A84041000181XXXX" value={newClient.devEui} onChange={(e) => setNewClient({...newClient, devEui: e.target.value})} />
+                    <label>TTN DevEUI Inicial (Opcional)</label>
+                    <input type="text" className="input-field" placeholder="A84041000181XXXX" value={newClient.devEui} onChange={e => setNewClient({...newClient, devEui: e.target.value})} />
                   </div>
                   <button type="submit" className="btn-primary" disabled={isSubmitting}>
-                    {isSubmitting ? "Creando..." : "Registrar Cliente e Inyectar Nodos"}
+                    {isSubmitting ? "Creando..." : "Registrar Cliente"}
                   </button>
                 </form>
               </div>
             )}
 
+            {/* Form Editar Cliente */}
+            {editingClient && (
+              <div className={`glass-panel ${styles.formContainer}`}>
+                <h2>✏️ Editar Cliente</h2>
+                <form onSubmit={handleEditClient} className={styles.form}>
+                  <div className={styles.formGroup}>
+                    <label>Nombre</label>
+                    <input type="text" className="input-field" value={editingClient.name} onChange={e => setEditingClient({...editingClient, name: e.target.value})} required />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Correo Electrónico</label>
+                    <input type="email" className="input-field" value={editingClient.email} onChange={e => setEditingClient({...editingClient, email: e.target.value})} required />
+                  </div>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                      {isSubmitting ? "Guardando..." : "Guardar Cambios"}
+                    </button>
+                    <button type="button" className={styles.actionBtn} onClick={() => setEditingClient(null)}>Cancelar</button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Tabla Clientes */}
             <div className={`glass-panel ${styles.tableContainer}`}>
               <table className={styles.table}>
                 <thead>
                   <tr>
                     <th>Nombre</th>
-                    <th>Contacto (Login)</th>
-                    <th>Nodos Propios</th>
+                    <th>Correo (Login)</th>
+                    <th>Nodos</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
@@ -216,63 +303,114 @@ export default function AdminDashboard() {
                       <td><strong>{client.name}</strong></td>
                       <td>{client.email}</td>
                       <td>{devices.filter(d => d.ownerId === client.id).length} en red</td>
-                      <td><button className={styles.actionBtn}>Editar</button></td>
+                      <td>
+                        <div style={{ display: "flex", gap: "0.4rem" }}>
+                          <button className={styles.actionBtn} onClick={() => { setEditingClient(client); setShowClientForm(false); }}>✏️ Editar</button>
+                          <button className={styles.deleteBtnSmall} onClick={() => handleDeleteClient(client.id, client.name)}>🗑️</button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
-                  {clients.length === 0 && !loading && <tr><td colSpan={4}>No hay clientes registrados</td></tr>}
+                  {clients.length === 0 && !loading && <tr><td colSpan={4}>No hay clientes</td></tr>}
                 </tbody>
               </table>
             </div>
           </>
         )}
 
-        {/* TAB: NODOS (DISPOSITIVOS) */}
+        {/* ═══════ TAB: NODOS ═══════ */}
         {activeTab === "devices" && (
           <>
-            {showDeviceForm && (
+            {/* Form Crear Nodo */}
+            {showDeviceForm && !editingDevice && (
               <div className={`glass-panel ${styles.formContainer}`}>
-                <h2>Asignar Nuevo Nodo a Cliente</h2>
+                <h2>Asignar Nuevo Nodo</h2>
                 <form onSubmit={handleAddDevice} className={styles.form}>
                   <div className={styles.formGroup}>
-                    <label>DevEUI de TTN (Dirección Física MAC)</label>
-                    <input type="text" className="input-field" placeholder="Ej. 24E124128XXXX" value={newDevice.devEui} onChange={(e) => setNewDevice({...newDevice, devEui: e.target.value})} required />
+                    <label>DevEUI de TTN</label>
+                    <input type="text" className="input-field" placeholder="24E124128XXXX" value={newDevice.devEui} onChange={e => setNewDevice({...newDevice, devEui: e.target.value})} required />
                   </div>
                   <div className={styles.formGroup}>
                     <label>Nombre Identificador</label>
-                    <input type="text" className="input-field" placeholder="Ej. Pozo Sur 2 / Medidor General" value={newDevice.name} onChange={(e) => setNewDevice({...newDevice, name: e.target.value})} required />
+                    <input type="text" className="input-field" placeholder="Medidor Pozo Norte" value={newDevice.name} onChange={e => setNewDevice({...newDevice, name: e.target.value})} required />
                   </div>
                   <div className={styles.formGroup}>
                     <label>Tipo de Hardware</label>
-                    <select className="input-field" value={newDevice.type} onChange={(e) => setNewDevice({...newDevice, type: e.target.value as DeviceType})} required>
-                      <option value="VALVULA">Válvula Reguladora de Flujo (UC300/511)</option>
+                    <select className="input-field" value={newDevice.type} onChange={e => setNewDevice({...newDevice, type: e.target.value as DeviceType})} required>
+                      <option value="VALVULA">Válvula (UC300/UC511)</option>
                       <option value="POZO">Bomba de Pozo (Relé UC300)</option>
-                      <option value="MEDIDOR">Medidor de Consumo de Cúbicos (EM300-DI)</option>
+                      <option value="REBOMBEO">Rebombeo (Relé UC300)</option>
+                      <option value="MEDIDOR">Medidor Consumo (EM300-DI)</option>
                     </select>
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Asignar al Cliente (Dueño)</label>
-                    <select className="input-field" value={newDevice.ownerId} onChange={(e) => setNewDevice({...newDevice, ownerId: e.target.value})} required>
-                      <option value="">Seleccione un propietario...</option>
+                    <label>Asignar al Cliente</label>
+                    <select className="input-field" value={newDevice.ownerId} onChange={e => setNewDevice({...newDevice, ownerId: e.target.value})} required>
+                      <option value="">Seleccione dueño...</option>
                       {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                   </div>
+                  <div className={styles.formGroup}>
+                    <label>Grupo / Sección (Opcional - para agrupar válvulas)</label>
+                    <input type="text" className="input-field" placeholder="Ej: Sección Norte" value={newDevice.group} onChange={e => setNewDevice({...newDevice, group: e.target.value})} />
+                  </div>
                   <button type="submit" className="btn-primary" disabled={isSubmitting}>
-                    {isSubmitting ? "Registrando..." : "Añadir a la Nube"}
+                    {isSubmitting ? "Registrando..." : "Añadir a la Red"}
                   </button>
                 </form>
               </div>
             )}
 
+            {/* Form Editar Nodo */}
+            {editingDevice && (
+              <div className={`glass-panel ${styles.formContainer}`}>
+                <h2>✏️ Editar Nodo: <code>{editingDevice.devEui}</code></h2>
+                <form onSubmit={handleEditDevice} className={styles.form}>
+                  <div className={styles.formGroup}>
+                    <label>Nombre</label>
+                    <input type="text" className="input-field" value={editingDevice.name} onChange={e => setEditingDevice({...editingDevice, name: e.target.value})} required />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Tipo</label>
+                    <select className="input-field" value={editingDevice.type} onChange={e => setEditingDevice({...editingDevice, type: e.target.value as DeviceType})} required>
+                      <option value="VALVULA">Válvula</option>
+                      <option value="POZO">Pozo</option>
+                      <option value="REBOMBEO">Rebombeo</option>
+                      <option value="MEDIDOR">Medidor</option>
+                    </select>
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Dueño</label>
+                    <select className="input-field" value={editingDevice.ownerId} onChange={e => setEditingDevice({...editingDevice, ownerId: e.target.value})} required>
+                      {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Grupo / Sección</label>
+                    <input type="text" className="input-field" placeholder="Sección Norte" value={editingDevice.group || ""} onChange={e => setEditingDevice({...editingDevice, group: e.target.value})} />
+                  </div>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                      {isSubmitting ? "Guardando..." : "Guardar"}
+                    </button>
+                    <button type="button" className={styles.actionBtn} onClick={() => setEditingDevice(null)}>Cancelar</button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Tabla Nodos */}
             <div className={`glass-panel ${styles.tableContainer}`}>
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    <th>EUI (HW ID)</th>
-                    <th>Identificador</th>
-                    <th>Pertenece a</th>
+                    <th>DevEUI</th>
+                    <th>Nombre</th>
+                    <th>Cliente</th>
                     <th>Tipo</th>
-                    <th>Estado / Cúbicos</th>
-                    <th>Acción Maestra</th>
+                    <th>Grupo</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -282,6 +420,7 @@ export default function AdminDashboard() {
                       <td><strong>{device.name}</strong></td>
                       <td>{getClientName(device.ownerId)}</td>
                       <td>{device.type}</td>
+                      <td>{device.group || "—"}</td>
                       <td>
                         {device.type === "MEDIDOR" ? (
                           <span style={{color: "#0ea5e9", fontWeight: "bold"}}>Consumo: {device.consumo ?? 0} M³</span>
@@ -290,21 +429,23 @@ export default function AdminDashboard() {
                         )}
                       </td>
                       <td>
-                        {device.type !== "MEDIDOR" ? (
-                          <button 
-                            className={`btn-primary ${device.status === "ON" ? styles.btnDanger : styles.btnSuccess}`}
-                            onClick={() => handleToggleDevice(device.devEui, device.status)}
-                            style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem" }}
-                          >
-                            Forzar {device.status === "ON" ? "Apagado" : "Encendido"}
-                          </button>
-                        ) : (
-                           <span style={{fontSize: "0.8rem", color: "#666"}}>Sólo Consumo</span>
-                        )}
+                        <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+                          {device.type !== "MEDIDOR" && (
+                            <button
+                              className={`btn-primary ${device.status === "ON" ? styles.btnDanger : styles.btnSuccess}`}
+                              onClick={() => handleToggleDevice(device.devEui, device.status)}
+                              style={{ padding: "0.3rem 0.6rem", fontSize: "0.75rem" }}
+                            >
+                              {device.status === "ON" ? "Apagar" : "Encender"}
+                            </button>
+                          )}
+                          <button className={styles.actionBtn} onClick={() => { setEditingDevice(device); setShowDeviceForm(false); }}>✏️</button>
+                          <button className={styles.deleteBtnSmall} onClick={() => handleDeleteDevice(device.devEui, device.name)}>🗑️</button>
+                        </div>
                       </td>
                     </tr>
                   ))}
-                  {devices.length === 0 && !loading && <tr><td colSpan={6}>No hay Nodos de Hardware registrados</td></tr>}
+                  {devices.length === 0 && !loading && <tr><td colSpan={7}>No hay nodos</td></tr>}
                 </tbody>
               </table>
             </div>
