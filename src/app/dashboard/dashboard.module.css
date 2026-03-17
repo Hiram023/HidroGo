@@ -32,6 +32,16 @@
 }
 .logoutBtn:hover { background-color: #fee2e2; border-color: #fca5a5; }
 
+/* Tabs */
+.tabNav { display: flex; gap: 0.4rem; }
+.tabBtn {
+  padding: 0.5rem 1.4rem; border-radius: 8px; font-size: 0.9rem; font-weight: 500;
+  color: var(--text-muted); border: 1px solid transparent; transition: all 0.2s;
+  cursor: pointer; background: transparent;
+}
+.tabBtn:hover { background: rgba(14,165,233,0.06); color: var(--text-main); }
+.tabActive { background: rgba(14,165,233,0.12); color: #0ea5e9; border-color: rgba(14,165,233,0.3); font-weight: 600; }
+
 .mainContent { padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
 
 /* Consumo Total */
