@@ -1,49 +1,74 @@
 import { NextResponse } from 'next/server';
-import { dbService } from '../../../../services/dbReal';
+import { doc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../../../lib/firebase';
 
-// Este Endpoint será llamado por The Things Network cada vez que un sensor LoRa envíe datos (Uplink)
+// Webhook TTN → Recibe datos de nodos LoRaWAN (EM300-DI, UC300, UC511)
 export async function POST(request: Request) {
   try {
-    // 1. Obtener y parsear el payload enviado por TTN (Formato JSON)
     const ttnData = await request.json();
 
-    // 2. Extraer datos útiles (Asumiendo formato estándar de TTS v3 payload formatter)
     const devEui = ttnData.end_device_ids?.dev_eui;
     const decodedPayload = ttnData.uplink_message?.decoded_payload;
-    
-    // Validar que tengamos datos
+
     if (!devEui || !decodedPayload) {
       return NextResponse.json({ error: 'Payload Incompleto' }, { status: 400 });
     }
 
-    // 3. Procesamiento especializado por tipo de Nodo
-    let newStatus = 'OFF';
-    let pulsosConteo = 0;
+    // ─── A) Nodo MEDIDOR (EM300-DI) ────────────────────────────
+    // El Payload Formatter de TTN entrega: { battery, humidity, temperature, pulses }
+    // "pulses" ya representa el volumen de agua procesado.
+    if (decodedPayload.pulses !== undefined) {
+      const consumo = Number(decodedPayload.pulses);
+      const battery = Number(decodedPayload.battery ?? 0);
+      const humidity = Number(decodedPayload.humidity ?? 0);
+      const temperature = Number(decodedPayload.temperature ?? 0);
 
-    // A) Lógica para Válvulas y Pozos (Milesight UC300 / UC511)
+      // 1. Actualizar el dispositivo con el consumo más reciente
+      const deviceRef = doc(db, "devices", devEui);
+      await updateDoc(deviceRef, {
+        consumo,
+        lastUplink: new Date().toISOString()
+      });
+
+      // 2. Guardar registro detallado en la colección consumo_logs
+      await addDoc(collection(db, "consumo_logs"), {
+        devEui,
+        consumo,
+        battery,
+        humidity,
+        temperature,
+        timestamp: serverTimestamp()
+      });
+
+      console.log(`[TTN UPLINK - MEDIDOR] ${devEui} → Consumo: ${consumo} | Bat: ${battery}% | Hum: ${humidity}% | Temp: ${temperature}°C`);
+
+      return NextResponse.json({ success: true, type: 'MEDIDOR', consumo }, { status: 200 });
+    }
+
+    // ─── B) Nodo CONTROL (UC300 / UC511 – Pozos y Válvulas) ────
+    let newStatus = 'OFF';
     if (decodedPayload.valve_1 === 'open' || decodedPayload.motor === 'on' || decodedPayload.status === 1) {
       newStatus = 'ON';
     }
 
-    // B) Lógica para Medidores de Agua (Milesight EM300-DI u otros contadores de pulso)
-    if (decodedPayload.counter !== undefined || decodedPayload.count !== undefined) {
-      pulsosConteo = Number(decodedPayload.counter || decodedPayload.count || 0);
-      newStatus = 'LECTURA';
-      
-      // Matemática: Supongamos que 1 pulso = 10 Litros (0.01 Metros Cúbicos)
-      // Modificable según el medidor físico real
-      const factorConversion = 0.01; 
-      const consumoMetrosCubicos = pulsosConteo * factorConversion;
-      
-      console.log(`[TTN UPLINK - MEDIDOR] ${devEui} -> Pulsos: ${pulsosConteo} -> Consumo M3: ${consumoMetrosCubicos}`);
-      await dbService.updateDeviceConsumo(devEui, consumoMetrosCubicos, decodedPayload);
-    } else {
-      // Si no es medidor, procesamos como ON/OFF normal
-      console.log(`[TTN UPLINK - CONTROL] Recibido dato de nodo: ${devEui} - Nuevo estado: ${newStatus}`);
-      await dbService.logDeviceHistory(devEui, newStatus, decodedPayload);
-    }
+    // Actualizar estado del dispositivo
+    const deviceRef = doc(db, "devices", devEui);
+    await updateDoc(deviceRef, {
+      status: newStatus,
+      lastUplink: new Date().toISOString()
+    });
 
-    return NextResponse.json({ success: true, message: 'Estado e historial actualizado' }, { status: 200 });
+    // Guardar en history_logs
+    await addDoc(collection(db, "history_logs"), {
+      devEui,
+      status: newStatus,
+      payload: decodedPayload,
+      timestamp: serverTimestamp()
+    });
+
+    console.log(`[TTN UPLINK - CONTROL] ${devEui} → Estado: ${newStatus}`);
+
+    return NextResponse.json({ success: true, type: 'CONTROL', status: newStatus }, { status: 200 });
   } catch (error) {
     console.error('Error procesando Webhook de TTN:', error);
     return NextResponse.json({ error: 'Error del Servidor' }, { status: 500 });

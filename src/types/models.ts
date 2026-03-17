@@ -5,11 +5,11 @@ export type User = {
   email: string;
   role: Role;
   clientId?: string;
-  mustChangePassword?: boolean; // true = primer inicio, forzar cambio
+  mustChangePassword?: boolean;
 };
 
 export type ClientInfo = {
-  id: string; // client_id
+  id: string;
   name: string;
   email: string;
   devEui?: string;
@@ -17,14 +17,25 @@ export type ClientInfo = {
 };
 
 export type DeviceType = "POZO" | "VALVULA" | "MEDIDOR";
-export type DeviceState = "ON" | "OFF" | "LECTURA";
+export type DeviceState = "ON" | "OFF";
 
 export type Device = {
   devEui: string;
   name: string;
   type: DeviceType;
   status: DeviceState;
-  ownerId: string; // ID del cliente dueño (client_id)
-  consumo?: number; // Metros cúbicos, sólo para tipo MEDIDOR
-  lastUplink?: string; // Timestamp ISO 8601 del último reporte TTN
+  ownerId: string;
+  consumo?: number;       // Metros cúbicos acumulados (solo MEDIDOR)
+  lastUplink?: string;    // ISO 8601
+};
+
+// Registro individual de telemetría del EM300-DI
+export type ConsumoLog = {
+  id?: string;
+  devEui: string;
+  consumo: number;         // Valor de "pulses" (ya en volumen procesado)
+  battery?: number;
+  humidity?: number;
+  temperature?: number;
+  timestamp: any;          // Firestore Timestamp o Date
 };

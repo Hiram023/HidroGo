@@ -65,28 +65,79 @@
   width: 100%;
 }
 
+/* ── Tarjeta de Consumo Total ─────────────────────────── */
+.consumoSection {
+  margin-bottom: 2.5rem;
+}
+
+.consumoCard {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem 2.5rem;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(34, 197, 94, 0.06) 100%);
+  border: 1px solid rgba(14, 165, 233, 0.2);
+}
+
+.consumoIcon {
+  font-size: 3rem;
+  background: linear-gradient(135deg, #0ea5e9, #22c55e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.consumoData {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.consumoLabel {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.consumoValue {
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: #0ea5e9;
+  line-height: 1;
+}
+
+.consumoMeta {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* ── Sección Bienvenida ──────────────────────────────── */
 .welcomeSection {
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 .welcomeSection h2 {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   color: var(--text-main);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .welcomeSection p {
   color: var(--text-muted);
 }
 
+/* ── Grid de Dispositivos ────────────────────────────── */
 .devicesGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 2rem;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
 .deviceCard {
-  background-color: var(--bg-secondary); /* Sobrecarga parcial del glassmorphism para mayor contraste en esta vista */
+  background-color: var(--bg-secondary);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -191,6 +242,60 @@
   background-color: #dc2626;
 }
 
+/* ── Sección Histórica ───────────────────────────────── */
+.historySection {
+  margin-top: 1rem;
+}
+
+.historyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.2rem;
+}
+
+.historyHeader h2 {
+  font-size: 1.5rem;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.tableContainer {
+  overflow-x: auto;
+}
+
+.historyTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.historyTable thead {
+  background-color: var(--bg-primary);
+}
+
+.historyTable th {
+  text-align: left;
+  padding: 0.9rem 1rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.historyTable td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+
+.historyTable tbody tr:hover {
+  background-color: rgba(14, 165, 233, 0.04);
+}
+
+/* ── Loading & Vacío ─────────────────────────────────── */
 .loading {
   height: 100vh;
   display: flex;
@@ -211,6 +316,7 @@
   border: 1px dashed var(--border-color);
 }
 
+/* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 640px) {
   .header {
     flex-direction: column;
@@ -219,5 +325,18 @@
   }
   .mainContent {
     padding: 1rem;
+  }
+  .consumoCard {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
+  }
+  .consumoValue {
+    font-size: 2rem;
+  }
+  .historyHeader {
+    flex-direction: column;
+    gap: 0.8rem;
+    align-items: flex-start;
   }
 }

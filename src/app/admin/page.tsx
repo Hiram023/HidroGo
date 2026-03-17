@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./admin.module.css";
 import { dbService } from "../../services/dbReal";
-import { Device, DeviceType, DeviceState } from "../../types/models";
+import { Device, DeviceType } from "../../types/models";
 
 type Client = {
   id: string;
@@ -83,7 +83,7 @@ export default function AdminDashboard() {
       const { doc, setDoc } = await import("firebase/firestore");
       const { db } = await import("../../lib/firebase");
       
-      const status: DeviceState = newDevice.type === "MEDIDOR" ? "LECTURA" : "OFF";
+      const status = "OFF";
       
       await setDoc(doc(db, "devices", newDevice.devEui), {
         name: newDevice.name,
@@ -284,7 +284,7 @@ export default function AdminDashboard() {
                       <td>{device.type}</td>
                       <td>
                         {device.type === "MEDIDOR" ? (
-                          <span style={{color: "#0ea5e9", fontWeight: "bold"}}>{device.consumo ?? 0} M³</span>
+                          <span style={{color: "#0ea5e9", fontWeight: "bold"}}>Consumo: {device.consumo ?? 0} M³</span>
                         ) : (
                           <span className={device.status === "ON" ? styles.statusOn : styles.statusOff}>{device.status}</span>
                         )}
@@ -299,7 +299,7 @@ export default function AdminDashboard() {
                             Forzar {device.status === "ON" ? "Apagado" : "Encendido"}
                           </button>
                         ) : (
-                           <span style={{fontSize: "0.8rem", color: "#666"}}>Sólo Lectura</span>
+                           <span style={{fontSize: "0.8rem", color: "#666"}}>Sólo Consumo</span>
                         )}
                       </td>
                     </tr>
