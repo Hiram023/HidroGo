@@ -60,13 +60,12 @@
 /* Medidor individual + gráfica */
 .medidorSection { margin-bottom: 0.5rem; }
 .medidorCard {
-  display: flex; align-items: center; gap: 1rem; padding: 1.2rem 1.5rem;
-  justify-content: space-between;
+  display: flex; flex-direction: column; gap: 0.4rem; padding: 1.2rem 1.5rem;
 }
 .medidorInfo { display: flex; flex-direction: column; }
 .medidorName { font-weight: 600; color: var(--text-main); font-size: 1rem; }
 .medidorValue { color: #0ea5e9; font-weight: 700; font-size: 1.4rem; }
-.medidorCaudal { color: #0284c7; font-weight: 600; font-size: 1rem; }
+.medidorCaudal { color: #0ea5e9; font-weight: 700; font-size: 1.05rem; }
 .lastUplink { font-size: 0.75rem; color: var(--text-muted); }
 
 /* Sections */

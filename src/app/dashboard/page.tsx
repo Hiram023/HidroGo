@@ -181,7 +181,7 @@ export default function ClientDashboard() {
                       <span className={styles.medidorCaudal}>{ultimoCaudal.toFixed(1)} l/s</span>
                     </div>
                     {m.lastUplink && (
-                      <span className={styles.lastUplink}>Último reporte: {new Date(m.lastUplink).toLocaleString("es-MX")}</span>
+                      <span className={styles.lastUplink}>Último reporte: {new Date(m.lastUplink).toLocaleString("es-MX", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true })}</span>
                     )}
                   </div>
                   <FlowRateChart devEui={m.devEui} deviceName={m.name} />
