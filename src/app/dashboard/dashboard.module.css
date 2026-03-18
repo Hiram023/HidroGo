@@ -66,6 +66,7 @@
 .medidorInfo { display: flex; flex-direction: column; }
 .medidorName { font-weight: 600; color: var(--text-main); font-size: 1rem; }
 .medidorValue { color: #0ea5e9; font-weight: 700; font-size: 1.4rem; }
+.medidorCaudal { color: #0284c7; font-weight: 600; font-size: 1rem; }
 .lastUplink { font-size: 0.75rem; color: var(--text-muted); }
 
 /* Sections */
@@ -126,7 +127,30 @@
 .deleteBtn:hover { background: rgba(239,68,68,0.2); }
 
 @media (max-width: 768px) {
-  .header { flex-direction: column; align-items: flex-start; }
+  .header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "brand user"
+      "nav   nav";
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1rem;
+  }
+  .brand { grid-area: brand; }
+  .userInfo {
+    grid-area: user;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
+    font-size: 0.78rem;
+  }
+  .tabNav {
+    grid-area: nav;
+    justify-content: center;
+    width: 100%;
+  }
   .mainContent { padding: 1rem; }
   .consumoCard { flex-direction: column; text-align: center; padding: 1.5rem; }
   .consumoValue { font-size: 2rem; }

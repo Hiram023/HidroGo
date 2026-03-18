@@ -40,12 +40,10 @@ export default function FlowRateChart({ devEui, deviceName }: Props) {
           const lps = delta > 0 ? (delta / 3600) * 1000 : 0;
 
           const date = curr.timestamp?.toDate?.() || new Date();
+          const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
           points.push({
-            time: date.toLocaleString("es-MX", {
-              day: "2-digit", month: "short",
-              hour: "2-digit", minute: "2-digit"
-            }),
-            lps: Number(lps.toFixed(3)),
+            time: `${date.getDate()} ${meses[date.getMonth()]}`,
+            lps: Number(lps.toFixed(1)),
             rawDate: date
           });
         }
@@ -74,9 +72,10 @@ export default function FlowRateChart({ devEui, deviceName }: Props) {
         alignItems: "center",
         marginBottom: "1rem"
       }}>
-        <h4 style={{ margin: 0, color: "var(--text-main)", fontSize: "0.95rem" }}>
-          Caudal Promedio — {deviceName}
-        </h4>
+        <div style={{ margin: 0 }}>
+          <h4 style={{ margin: 0, color: "var(--text-main)", fontSize: "0.95rem" }}>{deviceName}</h4>
+          <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Caudal Promedio</span>
+        </div>
         <select
           value={daysBack}
           onChange={(e) => setDaysBack(Number(e.target.value))}
@@ -117,7 +116,7 @@ export default function FlowRateChart({ devEui, deviceName }: Props) {
             />
             <YAxis
               tick={{ fontSize: 11, fill: "#94a3b8" }}
-              label={{ value: "L/P/S", angle: -90, position: "insideLeft", style: { fontSize: 11, fill: "#64748b" } }}
+              label={{ value: "l/s", angle: -90, position: "insideLeft", style: { fontSize: 11, fill: "#64748b" } }}
             />
             <Tooltip
               contentStyle={{
@@ -126,7 +125,7 @@ export default function FlowRateChart({ devEui, deviceName }: Props) {
                 borderRadius: "8px",
                 fontSize: "0.8rem"
               }}
-              formatter={(value: number) => [`${value} L/P/S`, "Caudal"]}
+              formatter={(value: number) => [`${value} l/s`, "Caudal"]}
             />
             <ReferenceLine y={0} stroke="#cbd5e1" />
             <Line

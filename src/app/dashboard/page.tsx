@@ -65,12 +65,29 @@ export default function ClientDashboard() {
     }
   };
 
+  // Helper: calcular caudal (l/s) entre dos logs consecutivos
+  const calcCaudal = (idx: number): number => {
+    // consumoLogs está ordenado DESC (más reciente primero)
+    if (idx >= consumoLogs.length - 1) return 0;
+    const curr = consumoLogs[idx];
+    const next = consumoLogs[idx + 1]; // el anterior en el tiempo
+    const delta = curr.consumo - next.consumo;
+    return delta > 0 ? Number(((delta / 3600) * 1000).toFixed(1)) : 0;
+  };
+
+  const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+
   const exportCSV = () => {
     if (consumoLogs.length === 0) { alert("No hay datos de consumo para exportar."); return; }
-    const headers = ["Fecha y Hora", "Medidor", "Consumo (M3)", "Bateria (%)", "Humedad (%)", "Temperatura (C)"];
-    const rows = consumoLogs.map(log => {
-      const fecha = log.timestamp?.toDate?.() ? log.timestamp.toDate().toLocaleString("es-MX") : "";
-      return [fecha, getDeviceName(log.devEui), log.consumo, log.battery ?? "", log.humidity ?? "", log.temperature ?? ""];
+    const headers = ["Año", "Mes", "Día", "Hora", "Medidor", "Consumo (m3)", "Caudal (l/s)", "Bateria (%)", "Humedad (%)", "Temperatura (C)"];
+    const rows = consumoLogs.map((log, idx) => {
+      const d = log.timestamp?.toDate?.() ? log.timestamp.toDate() : null;
+      const dia = d ? d.getDate() : "";
+      const mes = d ? meses[d.getMonth()] : "";
+      const anio = d ? d.getFullYear() : "";
+      const hora = d ? d.toLocaleString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: true }) : "";
+      const caudal = calcCaudal(idx);
+      return [anio, mes, dia, hora, getDeviceName(log.devEui), log.consumo, caudal, log.battery ?? "", log.humidity ?? "", log.temperature ?? ""];
     });
     const csvContent = [headers, ...rows].map(r => r.join(",")).join("\n");
     const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
@@ -121,8 +138,8 @@ export default function ClientDashboard() {
           </button>
         </nav>
         <div className={styles.userInfo}>
-          <span>{user.email}</span>
           <button onClick={handleLogout} className={styles.logoutBtn}>Salir</button>
+          <span>{user.email}</span>
         </div>
       </header>
 
@@ -137,7 +154,7 @@ export default function ClientDashboard() {
                 <div className={`glass-panel ${styles.consumoCard}`}>
                   <div className={styles.consumoData}>
                     <span className={styles.consumoLabel}>Consumo Total Actual</span>
-                    <span className={styles.consumoValue}>{consumoTotal.toLocaleString("es-MX", { maximumFractionDigits: 2 })} M³</span>
+                    <span className={styles.consumoValue}>{Math.round(consumoTotal / 1000)} Mm³</span>
                   </div>
                   <div className={styles.consumoMeta}>
                     <span>{medidores.length} medidor{medidores.length > 1 ? "es" : ""}</span>
@@ -147,20 +164,30 @@ export default function ClientDashboard() {
             )}
 
             {/* Medidores individuales + Gráfica de Caudal */}
-            {medidores.map(m => (
-              <section key={m.devEui} className={styles.medidorSection}>
-                <div className={`glass-panel ${styles.medidorCard}`}>
-                  <div className={styles.medidorInfo}>
-                    <span className={styles.medidorName}>{m.name}</span>
-                    <span className={styles.medidorValue}>{(m.consumo ?? 0).toLocaleString("es-MX", { maximumFractionDigits: 2 })} M³</span>
+            {medidores.map(m => {
+              // Calcular último caudal para este medidor
+              const medidorLogs = consumoLogs.filter(l => l.devEui === m.devEui);
+              let ultimoCaudal = 0;
+              if (medidorLogs.length >= 2) {
+                const delta = medidorLogs[0].consumo - medidorLogs[1].consumo;
+                ultimoCaudal = delta > 0 ? Number(((delta / 3600) * 1000).toFixed(1)) : 0;
+              }
+              return (
+                <section key={m.devEui} className={styles.medidorSection}>
+                  <div className={`glass-panel ${styles.medidorCard}`}>
+                    <div className={styles.medidorInfo}>
+                      <span className={styles.medidorName}>{m.name}</span>
+                      <span className={styles.medidorValue}>{(m.consumo ?? 0).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³</span>
+                      <span className={styles.medidorCaudal}>{ultimoCaudal.toFixed(1)} l/s</span>
+                    </div>
+                    {m.lastUplink && (
+                      <span className={styles.lastUplink}>Último reporte: {new Date(m.lastUplink).toLocaleString("es-MX")}</span>
+                    )}
                   </div>
-                  {m.lastUplink && (
-                    <span className={styles.lastUplink}>Último reporte: {new Date(m.lastUplink).toLocaleString("es-MX")}</span>
-                  )}
-                </div>
-                <FlowRateChart devEui={m.devEui} deviceName={m.name} />
-              </section>
-            ))}
+                  <FlowRateChart devEui={m.devEui} deviceName={m.name} />
+                </section>
+              );
+            })}
 
             {/* Tabla Histórica */}
             {medidores.length > 0 && (
@@ -174,18 +201,21 @@ export default function ClientDashboard() {
                 <div className={`glass-panel ${styles.tableContainer}`}>
                   <table className={styles.historyTable}>
                     <thead>
-                      <tr><th>Fecha y Hora</th><th>Medidor</th><th>Consumo</th><th>Batería</th><th>Humedad</th><th>Temperatura</th></tr>
+                      <tr><th>Fecha y Hora</th><th>Medidor</th><th>Consumo</th><th>Caudal (l/s)</th><th>Batería</th><th>Humedad</th><th>Temperatura</th></tr>
                     </thead>
                     <tbody>
                       {consumoLogs.map((log, idx) => {
-                        const fecha = log.timestamp?.toDate?.()
-                          ? log.timestamp.toDate().toLocaleString("es-MX", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                        const d = log.timestamp?.toDate?.();
+                        const fecha = d
+                          ? `${d.getDate()} ${meses[d.getMonth()]}, ${d.toLocaleString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: true })}`
                           : "—";
+                        const caudal = calcCaudal(idx);
                         return (
                           <tr key={log.id || idx}>
                             <td>{fecha}</td>
                             <td><strong>{getDeviceName(log.devEui)}</strong></td>
                             <td><strong className={styles.consumoCell}>{log.consumo}</strong></td>
+                            <td><strong>{caudal.toFixed(1)}</strong></td>
                             <td>{log.battery != null ? `${log.battery}%` : "—"}</td>
                             <td>{log.humidity != null ? `${log.humidity}%` : "—"}</td>
                             <td>{log.temperature != null ? `${log.temperature}°C` : "—"}</td>
@@ -193,7 +223,7 @@ export default function ClientDashboard() {
                         );
                       })}
                       {consumoLogs.length === 0 && (
-                        <tr><td colSpan={6} className={styles.emptyRow}>
+                        <tr><td colSpan={7} className={styles.emptyRow}>
                           Los datos llegarán automáticamente cada hora desde tus medidores.
                         </td></tr>
                       )}
