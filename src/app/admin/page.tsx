@@ -257,7 +257,7 @@ export default function AdminDashboard() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `HidroGo_Consumo_${mirrorClient?.name || "export"}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `RiegoSon_Consumo_${mirrorClient?.name || "export"}_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -270,13 +270,13 @@ export default function AdminDashboard() {
       {/* ═══════ SIDEBAR ═══════ */}
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <h2>HidroGo</h2>
+          <h2>RiegoSon</h2>
           <span>Control Maestro</span>
         </div>
         <nav className={styles.nav}>
           {/* Gestión de Clientes + Submenú */}
           <a href="#" className={activeView === "clients" ? styles.active : ""}
-            onClick={() => { setActiveView("clients"); setMirrorClientId(null); }}>
+            onClick={() => { setActiveView("clients"); setMirrorClientId(null); setClientsMenuOpen(true); }}>
             Gestión de Clientes
           </a>
           <button className={styles.submenuToggle} onClick={() => setClientsMenuOpen(!clientsMenuOpen)}>
@@ -331,8 +331,8 @@ export default function AdminDashboard() {
                     <input type="text" className="input-field" value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})} required /></div>
                   <div className={styles.formGroup}><label>Correo Electrónico (Login)</label>
                     <input type="email" className="input-field" value={newClient.email} onChange={e => setNewClient({...newClient, email: e.target.value})} required /></div>
-                  <div className={styles.formGroup}><label>Contraseña (Vacío = HidroGo2026*)</label>
-                    <input type="text" className="input-field" placeholder="HidroGo2026*" value={newClient.password} onChange={e => setNewClient({...newClient, password: e.target.value})} /></div>
+                  <div className={styles.formGroup}><label>Contraseña (Vacío = RiegoSon2026*)</label>
+                    <input type="text" className="input-field" placeholder="RiegoSon2026*" value={newClient.password} onChange={e => setNewClient({...newClient, password: e.target.value})} /></div>
                   <div className={styles.formGroup}><label>TTN DevEUI Inicial (Opcional)</label>
                     <input type="text" className="input-field" placeholder="A84041000181XXXX" value={newClient.devEui} onChange={e => setNewClient({...newClient, devEui: e.target.value})} /></div>
                   <button type="submit" className="btn-primary" disabled={isSubmitting}>{isSubmitting ? "Creando..." : "Registrar Cliente"}</button>
@@ -457,7 +457,7 @@ export default function AdminDashboard() {
                       <td>{device.type}</td>
                       <td>{device.group || "—"}</td>
                       <td>{device.type === "MEDIDOR"
-                        ? <span style={{color:"#0ea5e9",fontWeight:"bold"}}>Consumo: {device.consumo ?? 0} M³</span>
+                        ? <span style={{color:"#0ea5e9",fontWeight:"bold"}}>Consumo: {(device.consumo ?? 0).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³</span>
                         : <span className={device.status === "ON" ? styles.statusOn : styles.statusOff}>{device.status}</span>}</td>
                       <td>
                         <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
@@ -496,7 +496,7 @@ export default function AdminDashboard() {
                 <div className={`glass-panel ${dashStyles.consumoCard}`}>
                   <div className={dashStyles.consumoData}>
                     <span className={dashStyles.consumoLabel}>Consumo Total Actual</span>
-                    <span className={dashStyles.consumoValue}>{mirrorConsumoTotal.toLocaleString("es-MX", { maximumFractionDigits: 2 })} M³</span>
+                    <span className={dashStyles.consumoValue}>{Math.round(mirrorConsumoTotal / 1000)} Mm³</span>
                   </div>
                   <div className={dashStyles.consumoMeta}><span>{mirrorMedidores.length} medidor{mirrorMedidores.length > 1 ? "es" : ""}</span></div>
                 </div>
@@ -509,7 +509,7 @@ export default function AdminDashboard() {
                 <div className={`glass-panel ${dashStyles.medidorCard}`}>
                   <div className={dashStyles.medidorInfo}>
                     <span className={dashStyles.medidorName}>{m.name}</span>
-                    <span className={dashStyles.medidorValue}>{(m.consumo ?? 0).toLocaleString("es-MX", { maximumFractionDigits: 2 })} M³</span>
+                    <span className={dashStyles.medidorValue}>{(m.consumo ?? 0).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³</span>
                   </div>
                   <div className={dashStyles.adminActions}>
                     <button className={dashStyles.editBtn} onClick={() => { setEditingDevice(m); setOriginalDevEui(m.devEui); setActiveView("devices"); }}>Editar</button>

@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "HidroGo - Plataforma SaaS",
+  title: "RiegoSon - Plataforma SaaS",
   description: "Control de válvulas de riego y motores de pozos con TTN",
 };
 

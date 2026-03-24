@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, message: 'Simulado (Falta API Key)', hexPayload });
     }
 
-    const ttnApiUrl = `https://${ttnRegion}.cloud.thethings.network/api/v3/as/applications/${ttnAppId}/webhooks/hidrogo-webhook/devices/${devEui}/down/push`;
+    const ttnApiUrl = `https://${ttnRegion}.cloud.thethings.network/api/v3/as/applications/${ttnAppId}/webhooks/riegoson-webhook/devices/${devEui}/down/push`;
 
     const ttnResponse = await fetch(ttnApiUrl, {
       method: 'POST',

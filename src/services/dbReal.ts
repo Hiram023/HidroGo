@@ -39,7 +39,7 @@ export const dbService = {
     try {
       const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp" + Date.now());
       const secondaryAuth = getAuth(secondaryApp);
-      const password = customPassword || "HidroGo2026*";
+      const password = customPassword || "RiegoSon2026*";
       const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
       const uid = userCred.user.uid;
       await firebaseSignOut(secondaryAuth);

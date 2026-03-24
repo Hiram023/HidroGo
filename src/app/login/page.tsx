@@ -52,7 +52,7 @@ export default function LoginPage() {
 
       <div className={`glass-panel ${styles.loginCard}`}>
         <div className={styles.header}>
-          <h1>HidroGo</h1>
+          <h1>RiegoSon</h1>
           <p>Plataforma SaaS para Riego y Pozos</p>
         </div>
 

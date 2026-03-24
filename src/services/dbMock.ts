@@ -2,7 +2,7 @@ import { User, ClientInfo, Device } from "../types/models";
 
 // Simulación de colecciones de Firestore
 const users: User[] = [
-  { uid: "admin_uid", email: "admin@hidrogo.com", role: "SUPER_ADMIN" },
+  { uid: "admin_uid", email: "admin@riegoson.com", role: "SUPER_ADMIN" },
   { uid: "client_1", email: "contacto@elsol.com", role: "CLIENT", clientId: "c_123" },
 ];
 

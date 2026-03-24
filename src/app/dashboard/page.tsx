@@ -77,8 +77,8 @@ export default function ClientDashboard() {
     const nextDate = next.timestamp?.toDate?.() || new Date(0);
     const intervalSec = (currDate.getTime() - nextDate.getTime()) / 1000;
     // Si el intervalo es > 65 min o inválido, caudal = 0 (dato no confiable)
-    if (intervalSec > MAX_INTERVAL || intervalSec <= 0 || delta <= 0) return 0;
-    return Number(((delta * 1000) / intervalSec).toFixed(1));
+    if (intervalSec > MAX_INTERVAL || intervalSec <= 0 || delta < 0) return 0;
+    return delta === 0 ? 0 : Number(((delta * 1000) / intervalSec).toFixed(1));
   };
 
   const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
@@ -100,7 +100,7 @@ export default function ClientDashboard() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `HidroGo_Consumo_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `RiegoSon_Consumo_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -132,7 +132,7 @@ export default function ClientDashboard() {
     <div className={styles.dashboardLayout}>
       <header className={styles.header}>
         <div className={styles.brand}>
-          <h1>HidroGo</h1>
+          <h1>RiegoSon</h1>
           <span className={styles.roleBadge}>Panel del Cliente</span>
         </div>
         <nav className={styles.tabNav}>
@@ -179,7 +179,7 @@ export default function ClientDashboard() {
                 const d0 = medidorLogs[0].timestamp?.toDate?.() || new Date(0);
                 const d1 = medidorLogs[1].timestamp?.toDate?.() || new Date(0);
                 const intSec = (d0.getTime() - d1.getTime()) / 1000;
-                ultimoCaudal = (intSec > MAX_INTERVAL || intSec <= 0 || delta <= 0) ? 0 : Number(((delta * 1000) / intSec).toFixed(1));
+                ultimoCaudal = (intSec > MAX_INTERVAL || intSec <= 0 || delta < 0) ? 0 : (delta === 0 ? 0 : Number(((delta * 1000) / intSec).toFixed(1)));
               }
               return (
                 <section key={m.devEui} className={styles.medidorSection}>

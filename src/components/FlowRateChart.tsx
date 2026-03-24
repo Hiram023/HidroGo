@@ -45,12 +45,12 @@ export default function FlowRateChart({ devEui, deviceName }: Props) {
           const intervalSec = (currDate.getTime() - prevDate.getTime()) / 1000;
 
           // Si el intervalo es > 65 min o inválido, omitir (gateway caído, dato no confiable)
-          if (intervalSec > MAX_INTERVAL || intervalSec <= 0 || delta <= 0) {
+          if (intervalSec > MAX_INTERVAL || intervalSec <= 0 || delta < 0) {
             continue;
           }
 
           // Caudal real: delta m³ → litros / segundos reales transcurridos
-          const lps = (delta * 1000) / intervalSec;
+          const lps = delta === 0 ? 0 : (delta * 1000) / intervalSec;
 
           points.push({
             time: `${currDate.getDate()} ${meses[currDate.getMonth()]}`,
