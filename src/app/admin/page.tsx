@@ -25,7 +25,7 @@ export default function AdminDashboard() {
 
   // Sidebar state
   const [activeView, setActiveView] = useState<"clients" | "devices" | "mirror">("clients");
-  const [clientsMenuOpen, setClientsMenuOpen] = useState(true);
+  const [clientsMenuOpen, setClientsMenuOpen] = useState(false);
   const [mirrorClientId, setMirrorClientId] = useState<string | null>(null);
   const [mirrorLogs, setMirrorLogs] = useState<ConsumoLog[]>([]);
 
@@ -274,25 +274,25 @@ export default function AdminDashboard() {
           <span>Control Maestro</span>
         </div>
         <nav className={styles.nav}>
-          {/* Gestión de Clientes + Submenú */}
+          {/* Gestión de Clientes — Acordeón */}
           <a href="#" className={activeView === "clients" ? styles.active : ""}
-            onClick={() => { setActiveView("clients"); setMirrorClientId(null); setClientsMenuOpen(true); }}>
-            Gestión de Clientes
+            onClick={(e) => { e.preventDefault(); setClientsMenuOpen(!clientsMenuOpen); setActiveView("clients"); setMirrorClientId(null); }}>
+            {clientsMenuOpen ? "▼" : "▶"} Gestión de Clientes
           </a>
-          <button className={styles.submenuToggle} onClick={() => setClientsMenuOpen(!clientsMenuOpen)}>
-            {clientsMenuOpen ? "▼" : "▶"} Clientes Registrados ({clients.length})
-          </button>
           {clientsMenuOpen && (
-            <div className={styles.submenu}>
-              {clients.map(c => (
-                <a key={c.id} href="#"
-                  className={mirrorClientId === c.id ? styles.submenuActive : ""}
-                  onClick={() => openMirrorView(c.id)}>
-                  {c.name}
-                </a>
-              ))}
-              {clients.length === 0 && <span className={styles.submenuEmpty}>Sin clientes</span>}
-            </div>
+            <>
+              <span className={styles.submenuToggle}>CLIENTES REGISTRADOS ({clients.length})</span>
+              <div className={styles.submenu}>
+                {clients.map(c => (
+                  <a key={c.id} href="#"
+                    className={mirrorClientId === c.id ? styles.submenuActive : ""}
+                    onClick={() => openMirrorView(c.id)}>
+                    {c.name}
+                  </a>
+                ))}
+                {clients.length === 0 && <span className={styles.submenuEmpty}>Sin clientes</span>}
+              </div>
+            </>
           )}
 
           <a href="#" className={activeView === "devices" ? styles.active : ""}
