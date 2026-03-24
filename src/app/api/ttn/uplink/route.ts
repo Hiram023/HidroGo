@@ -5,6 +5,15 @@ import { db } from '../../../../lib/firebase';
 // Webhook TTN → Recibe datos de nodos LoRaWAN (EM300-DI, UC300, UC511)
 export async function POST(request: Request) {
   try {
+    // Verificar token secreto del webhook (configurar TTN_WEBHOOK_SECRET en Vercel)
+    const webhookSecret = process.env.TTN_WEBHOOK_SECRET;
+    if (webhookSecret) {
+      const authHeader = request.headers.get('Authorization');
+      if (authHeader !== `Bearer ${webhookSecret}`) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+      }
+    }
+
     const ttnData = await request.json();
 
     const devEui = ttnData.end_device_ids?.dev_eui;

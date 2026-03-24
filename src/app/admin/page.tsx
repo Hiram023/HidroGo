@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../../lib/firebase";
 import styles from "./admin.module.css";
 import dashStyles from "../dashboard/dashboard.module.css";
 import { dbService } from "../../services/dbReal";
@@ -15,6 +18,10 @@ export default function AdminDashboard() {
   const [clients, setClients] = useState<Client[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Auth protection
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
 
   // Sidebar state
   const [activeView, setActiveView] = useState<"clients" | "devices" | "mirror">("clients");
@@ -34,7 +41,33 @@ export default function AdminDashboard() {
   const [editingDevice, setEditingDevice] = useState<Device|null>(null);
   const [originalDevEui, setOriginalDevEui] = useState("");
 
-  useEffect(() => { loadData(); }, []);
+  // ─── Auth verification: must be SUPER_ADMIN ──────────────
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (!fbUser) {
+        router.push("/login");
+        return;
+      }
+      try {
+        const userDoc = await getDoc(doc(db, "users", fbUser.uid));
+        if (!userDoc.exists() || userDoc.data().role !== "SUPER_ADMIN") {
+          router.push("/login");
+          return;
+        }
+        setAuthorized(true);
+      } catch (err) {
+        console.error("Error verificando rol:", err);
+        router.push("/login");
+      } finally {
+        setAuthLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  useEffect(() => {
+    if (authorized) loadData();
+  }, [authorized]);
 
   const loadData = async () => {
     setLoading(true);
@@ -228,6 +261,9 @@ export default function AdminDashboard() {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  if (authLoading) return <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", color: "var(--primary)", background: "var(--bg-primary)" }}>Verificando acceso...</div>;
+  if (!authorized) return null;
 
   return (
     <div className={styles.adminLayout}>

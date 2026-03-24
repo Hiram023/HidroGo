@@ -31,20 +31,31 @@ export default function FlowRateChart({ devEui, deviceName }: Props) {
         const logs = await dbService.getConsumoLogsByDevEui(devEui, daysBack);
         const points: ChartDataPoint[] = [];
 
+        const MAX_INTERVAL = 65 * 60; // 65 minutos en segundos (tolerancia de 5 min)
+        const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+
         for (let i = 1; i < logs.length; i++) {
           const prev = logs[i - 1];
           const curr = logs[i];
           const delta = curr.consumo - prev.consumo;
 
-          // Filtro de ruido: solo graficamos flujo positivo
-          const lps = delta > 0 ? (delta / 3600) * 1000 : 0;
+          // Calcular intervalo real en segundos entre lecturas
+          const prevDate = prev.timestamp?.toDate?.() || new Date();
+          const currDate = curr.timestamp?.toDate?.() || new Date();
+          const intervalSec = (currDate.getTime() - prevDate.getTime()) / 1000;
 
-          const date = curr.timestamp?.toDate?.() || new Date();
-          const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+          // Si el intervalo es > 65 min o inválido, omitir (gateway caído, dato no confiable)
+          if (intervalSec > MAX_INTERVAL || intervalSec <= 0 || delta <= 0) {
+            continue;
+          }
+
+          // Caudal real: delta m³ → litros / segundos reales transcurridos
+          const lps = (delta * 1000) / intervalSec;
+
           points.push({
-            time: `${date.getDate()} ${meses[date.getMonth()]}`,
+            time: `${currDate.getDate()} ${meses[currDate.getMonth()]}`,
             lps: Number(lps.toFixed(1)),
-            rawDate: date
+            rawDate: currDate
           });
         }
         setData(points);

@@ -66,13 +66,19 @@ export default function ClientDashboard() {
   };
 
   // Helper: calcular caudal (l/s) entre dos logs consecutivos
+  const MAX_INTERVAL = 65 * 60; // 65 minutos en segundos
   const calcCaudal = (idx: number): number => {
     // consumoLogs está ordenado DESC (más reciente primero)
     if (idx >= consumoLogs.length - 1) return 0;
     const curr = consumoLogs[idx];
     const next = consumoLogs[idx + 1]; // el anterior en el tiempo
     const delta = curr.consumo - next.consumo;
-    return delta > 0 ? Number(((delta / 3600) * 1000).toFixed(1)) : 0;
+    const currDate = curr.timestamp?.toDate?.() || new Date(0);
+    const nextDate = next.timestamp?.toDate?.() || new Date(0);
+    const intervalSec = (currDate.getTime() - nextDate.getTime()) / 1000;
+    // Si el intervalo es > 65 min o inválido, caudal = 0 (dato no confiable)
+    if (intervalSec > MAX_INTERVAL || intervalSec <= 0 || delta <= 0) return 0;
+    return Number(((delta * 1000) / intervalSec).toFixed(1));
   };
 
   const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
@@ -170,7 +176,10 @@ export default function ClientDashboard() {
               let ultimoCaudal = 0;
               if (medidorLogs.length >= 2) {
                 const delta = medidorLogs[0].consumo - medidorLogs[1].consumo;
-                ultimoCaudal = delta > 0 ? Number(((delta / 3600) * 1000).toFixed(1)) : 0;
+                const d0 = medidorLogs[0].timestamp?.toDate?.() || new Date(0);
+                const d1 = medidorLogs[1].timestamp?.toDate?.() || new Date(0);
+                const intSec = (d0.getTime() - d1.getTime()) / 1000;
+                ultimoCaudal = (intSec > MAX_INTERVAL || intSec <= 0 || delta <= 0) ? 0 : Number(((delta * 1000) / intSec).toFixed(1));
               }
               return (
                 <section key={m.devEui} className={styles.medidorSection}>
