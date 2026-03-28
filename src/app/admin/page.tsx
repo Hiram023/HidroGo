@@ -90,7 +90,7 @@ export default function AdminDashboard() {
     try {
       const logs = await dbService.getConsumoLogs(clientId);
       setMirrorLogs(logs);
-    } catch (e) { console.error(e); }
+    } catch {}
   };
 
   const handleLogout = async () => { await dbService.signOut(); router.push("/login"); };
@@ -204,7 +204,7 @@ export default function AdminDashboard() {
     setDevices(prev => prev.map(d => d.devEui === devEui ? { ...d, status: currentStatus === "ON" ? "OFF" : "ON" } as Device : d));
     try {
       await fetch('/api/ttn/downlink', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-Key': process.env.NEXT_PUBLIC_DOWNLINK_SECRET || '' },
         body: JSON.stringify({ devEui, command: currentStatus === "ON" ? "OFF" : "ON" })
       });
       await dbService.toggleDeviceStatus(devEui, currentStatus);
