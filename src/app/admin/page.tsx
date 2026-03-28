@@ -239,18 +239,33 @@ export default function AdminDashboard() {
     setDevices(prev => prev.map(d => d.group === groupName && d.type === "VALVULA" && d.ownerId === mirrorClientId ? { ...d, status: action } as Device : d));
     for (const dev of groupDevices) {
       try {
-        await fetch('/api/ttn/downlink', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ devEui: dev.devEui, command: action }) });
+        await fetch('/api/ttn/downlink', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-Key': process.env.NEXT_PUBLIC_DOWNLINK_SECRET || '' }, body: JSON.stringify({ devEui: dev.devEui, command: action }) });
         await dbService.toggleDeviceStatus(dev.devEui, dev.status);
-      } catch (err) { console.error(err); }
+      } catch {}
     }
   };
 
   const exportCSV = (logs: ConsumoLog[]) => {
     if (logs.length === 0) { alert("No hay datos."); return; }
-    const headers = ["Fecha y Hora", "Medidor", "Consumo (M3)", "Bateria (%)", "Humedad (%)", "Temperatura (C)"];
-    const rows = logs.map(log => {
+    const MAX_INT = 65 * 60;
+    const headers = ["Fecha y Hora", "Medidor", "Consumo (m3)", "Caudal (l/s)", "Bateria (%)", "Humedad (%)", "Temperatura (C)"];
+    const sortedLogs = [...logs].sort((a, b) => {
+      const ta = a.timestamp?.toDate?.() || new Date(0);
+      const tb = b.timestamp?.toDate?.() || new Date(0);
+      return ta.getTime() - tb.getTime();
+    });
+    const rows = sortedLogs.map((log, idx) => {
       const fecha = log.timestamp?.toDate?.() ? log.timestamp.toDate().toLocaleString("es-MX") : "";
-      return [fecha, getDeviceName(log.devEui), log.consumo, log.battery ?? "", log.humidity ?? "", log.temperature ?? ""];
+      let caudal = 0;
+      if (idx > 0 && sortedLogs[idx - 1].devEui === log.devEui) {
+        const prev = sortedLogs[idx - 1];
+        const delta = log.consumo - prev.consumo;
+        const d0 = log.timestamp?.toDate?.() || new Date(0);
+        const d1 = prev.timestamp?.toDate?.() || new Date(0);
+        const intSec = (d0.getTime() - d1.getTime()) / 1000;
+        caudal = (intSec > MAX_INT || intSec <= 0 || delta < 0) ? 0 : (delta === 0 ? 0 : Number(((delta * 1000) / intSec).toFixed(1)));
+      }
+      return [fecha, getDeviceName(log.devEui), log.consumo, caudal, log.battery ?? "", log.humidity ?? "", log.temperature ?? ""];
     });
     const csvContent = [headers, ...rows].map(r => r.join(",")).join("\n");
     const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });

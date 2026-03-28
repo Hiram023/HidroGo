@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../../lib/firebase";
 import { dbService } from "../../services/dbReal";
 import { Device, User, ConsumoLog } from "../../types/models";
 import FlowRateChart from "../../components/FlowRateChart";
@@ -16,31 +19,37 @@ export default function ClientDashboard() {
   const [activeTab, setActiveTab] = useState<"inicio" | "operaciones">("inicio");
 
   useEffect(() => {
-    const storedUser = sessionStorage.getItem("userContext");
-    if (!storedUser) { router.push("/login"); return; }
-    const parsedUser = JSON.parse(storedUser) as User;
-    if (parsedUser.role !== "CLIENT" || !parsedUser.clientId) { router.push("/login"); return; }
-    setUser(parsedUser);
-
-    const loadAll = async () => {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (!fbUser) { router.push("/login"); return; }
       try {
+        const userDoc = await getDoc(doc(db, "users", fbUser.uid));
+        if (!userDoc.exists()) { router.push("/login"); return; }
+        const userData = { uid: fbUser.uid, email: fbUser.email!, ...userDoc.data() } as User;
+        if (userData.role !== "CLIENT" || !userData.clientId) { router.push("/login"); return; }
+        if (userData.mustChangePassword) { router.push("/cambiar-password"); return; }
+        setUser(userData);
+
         const [clientDevices, logs] = await Promise.all([
-          dbService.getClientDevices(parsedUser.clientId!),
-          dbService.getConsumoLogs(parsedUser.clientId!)
+          dbService.getClientDevices(userData.clientId!),
+          dbService.getConsumoLogs(userData.clientId!)
         ]);
         setDevices(clientDevices);
         setConsumoLogs(logs);
-      } catch (err) { console.error("Error cargando datos:", err); }
-      finally { setLoading(false); }
-    };
-    loadAll();
+      } catch (err) {
+        router.push("/login");
+      } finally {
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
   }, [router]);
 
   const handleToggle = async (devEui: string, currentStatus: string) => {
     setDevices(prev => prev.map(d => d.devEui === devEui ? { ...d, status: currentStatus === "ON" ? "OFF" : "ON" } as Device : d));
     try {
       const res = await fetch('/api/ttn/downlink', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': process.env.NEXT_PUBLIC_DOWNLINK_SECRET || '' },
         body: JSON.stringify({ devEui, command: currentStatus === "ON" ? "OFF" : "ON" })
       });
       if (!res.ok) throw new Error("TTN rechazó");
@@ -57,11 +66,12 @@ export default function ClientDashboard() {
     for (const dev of groupDevices) {
       try {
         await fetch('/api/ttn/downlink', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-API-Key': process.env.NEXT_PUBLIC_DOWNLINK_SECRET || '' },
           body: JSON.stringify({ devEui: dev.devEui, command: action })
         });
         await dbService.toggleDeviceStatus(dev.devEui, dev.status);
-      } catch (err) { console.error(`Error toggling ${dev.devEui}:`, err); }
+      } catch {}
     }
   };
 

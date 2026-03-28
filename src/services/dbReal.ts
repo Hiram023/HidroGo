@@ -17,7 +17,7 @@ export const dbService = {
       }
       return null;
     } catch (error: any) {
-      console.error("Error en auth Firebase:", error.message);
+      console.error("Auth error");
       return null;
     }
   },
@@ -55,7 +55,7 @@ export const dbService = {
 
       return { success: true, tempPassword: password };
     } catch (error: any) {
-      console.error("Error creando cliente completo:", error);
+      console.error("Error creando cliente");
       return { success: false, error: error.message };
     }
   },
@@ -112,7 +112,6 @@ export const dbService = {
       await updateDoc(doc(db, "devices", devEui), { status: newStatus });
       return true;
     } catch (error) {
-      console.error("Error actualizando status:", error);
       return false;
     }
   },
@@ -120,6 +119,6 @@ export const dbService = {
   logDeviceHistory: async (devEui: string, status: string, fullPayload: any) => {
     try {
       await addDoc(collection(db, "history_logs"), { devEui, status, payload: fullPayload, timestamp: serverTimestamp() });
-    } catch (error) { console.error("Error guardando historial:", error); }
+    } catch {}
   }
 };

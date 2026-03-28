@@ -49,8 +49,6 @@ export async function POST(request: Request) {
         timestamp: serverTimestamp()
       });
 
-      console.log(`[TTN UPLINK - MEDIDOR] ${devEui} → Consumo: ${consumo} | Bat: ${battery}% | Hum: ${humidity}% | Temp: ${temperature}°C`);
-
       return NextResponse.json({ success: true, type: 'MEDIDOR', consumo }, { status: 200 });
     }
 
@@ -75,11 +73,8 @@ export async function POST(request: Request) {
       timestamp: serverTimestamp()
     });
 
-    console.log(`[TTN UPLINK - CONTROL] ${devEui} → Estado: ${newStatus}`);
-
     return NextResponse.json({ success: true, type: 'CONTROL', status: newStatus }, { status: 200 });
   } catch (error) {
-    console.error('Error procesando Webhook de TTN:', error);
     return NextResponse.json({ error: 'Error del Servidor' }, { status: 500 });
   }
 }
